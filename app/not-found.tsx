@@ -4,16 +4,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default function NotFound() {
   return (
-    <div className="container flex items-center justify-center min-h-[60vh]">
+    <div className="container flex items-center justify-center min-h-[60vh] px-4 sm:px-6 py-8">
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
-          <CardTitle className="text-4xl font-bold">404</CardTitle>
-          <CardDescription className="text-lg">
+          <CardTitle className="text-3xl sm:text-4xl font-bold">404</CardTitle>
+          <CardDescription className="text-base sm:text-lg">
             Page Not Found
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center space-y-4">
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             The page you&apos;re looking for doesn&apos;t exist or has been moved.
           </p>
           <Button asChild>

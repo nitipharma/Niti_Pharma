@@ -10,18 +10,18 @@ export const metadata: Metadata = {
 
 export default function CompliancePage() {
   return (
-    <div className="container py-8">
+    <div className="container py-4 sm:py-8 px-4 sm:px-6">
       <Breadcrumb items={[{ label: "Compliance" }]} />
       
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-4">Compliance & Quality</h1>
-        <p className="text-lg text-muted-foreground">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3 sm:mb-4">Compliance & Quality</h1>
+        <p className="text-sm sm:text-lg text-muted-foreground">
           We maintain the highest standards of compliance, quality, and regulatory adherence
           in all our operations.
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 mb-12">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mb-8 sm:mb-12">
         <Card>
           <CardHeader>
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">

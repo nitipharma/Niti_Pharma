@@ -11,22 +11,22 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <div className="container py-8">
+    <div className="container py-4 sm:py-8 px-4 sm:px-6">
       <Breadcrumb items={[{ label: "Contact" }]} />
       
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-4">Contact Sales</h1>
-        <p className="text-lg text-muted-foreground">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3 sm:mb-4">Contact Sales</h1>
+        <p className="text-sm sm:text-lg text-muted-foreground">
           Have questions? We&apos;re here to help. Reach out to our sales team for
           pricing, product information, or partnership opportunities.
         </p>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
+      <div className="grid gap-6 sm:gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <ContactForm />
         </div>
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Contact Information</CardTitle>
