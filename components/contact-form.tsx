@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -8,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast"
+import { CheckCircle2 } from "lucide-react"
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -24,6 +26,7 @@ type ContactFormData = z.infer<typeof contactSchema>
 
 export function ContactForm() {
   const { toast } = useToast()
+  const [isSubmitted, setIsSubmitted] = useState(false)
   const {
     register,
     handleSubmit,
@@ -32,6 +35,13 @@ export function ContactForm() {
   } = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
   })
+
+  // Reset form state on component mount (page refresh)
+  useEffect(() => {
+    reset()
+    setIsSubmitted(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const onSubmit = async (data: ContactFormData) => {
     try {
@@ -49,6 +59,9 @@ export function ContactForm() {
         throw new Error(result.error || "Failed to send message")
       }
 
+      // Show success state
+      setIsSubmitted(true)
+      
       // Show success toast
       toast({
         title: "Message sent successfully!",
@@ -65,6 +78,36 @@ export function ContactForm() {
         variant: "destructive",
       })
     }
+  }
+
+  if (isSubmitted) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <CheckCircle2 className="h-8 w-8 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold">Thank You!</h3>
+              <p className="text-muted-foreground max-w-md">
+                Your message has been sent successfully. We&apos;ll get back to you as soon as possible.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsSubmitted(false)
+                reset()
+              }}
+              className="mt-4"
+            >
+              Send Another Message
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
