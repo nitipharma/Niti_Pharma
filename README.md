@@ -2,6 +2,8 @@
 
 A modern, polished demo website for a B2B pharmacy distributor showcasing product catalog, coverage information, and compliance details. Built with Next.js 14, TypeScript, and Tailwind CSS for optimal performance and user experience.
 
+> **Note**: This is a demo/portfolio project showcasing modern web development practices.
+
 ## 📋 Table of Contents
 
 - [Features](#features)
