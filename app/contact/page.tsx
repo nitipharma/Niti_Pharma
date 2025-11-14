@@ -17,7 +17,7 @@ export default function ContactPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight mb-4">Contact Sales</h1>
         <p className="text-lg text-muted-foreground">
-          Have questions? We're here to help. Reach out to our sales team for
+          Have questions? We&apos;re here to help. Reach out to our sales team for
           pricing, product information, or partnership opportunities.
         </p>
       </div>
