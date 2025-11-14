@@ -42,7 +42,7 @@ export default function ContactPage() {
                 <div>
                   <p className="font-medium">Email</p>
                   <p className="text-sm text-muted-foreground">
-                    sales@nitipharma.com
+                    nitipharma04@gmail.com
                   </p>
                 </div>
               </div>
@@ -53,7 +53,7 @@ export default function ContactPage() {
                 <div>
                   <p className="font-medium">Phone</p>
                   <p className="text-sm text-muted-foreground">
-                    +91 1800-XXX-XXXX
+                    +91 9226206169
                   </p>
                 </div>
               </div>
@@ -64,7 +64,7 @@ export default function ContactPage() {
                 <div>
                   <p className="font-medium">Address</p>
                   <p className="text-sm text-muted-foreground">
-                    Mumbai, Maharashtra
+                    Kalyan, Maharashtra
                     <br />
                     India
                   </p>
@@ -89,7 +89,7 @@ export default function ContactPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Sunday</span>
-                  <span className="font-medium">Closed</span>
+                  <span className="font-medium">10:00 AM - 3:00 PM</span>
                 </div>
               </div>
             </CardContent>

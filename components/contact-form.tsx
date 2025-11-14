@@ -34,17 +34,37 @@ export function ContactForm() {
   })
 
   const onSubmit = async (data: ContactFormData) => {
-    // Log to console (demo mode)
-    console.log("Contact form submission:", data)
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
 
-    // Show success toast
-    toast({
-      title: "Message sent (demo)",
-      description: "Thank you for your interest. This is a demo—no actual submission was made.",
-    })
+      const result = await response.json()
 
-    // Reset form
-    reset()
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to send message")
+      }
+
+      // Show success toast
+      toast({
+        title: "Message sent successfully!",
+        description: "Thank you for your interest. We'll get back to you soon.",
+      })
+
+      // Reset form
+      reset()
+    } catch (error) {
+      console.error("Error submitting form:", error)
+      toast({
+        title: "Error sending message",
+        description: error instanceof Error ? error.message : "Please try again later.",
+        variant: "destructive",
+      })
+    }
   }
 
   return (
