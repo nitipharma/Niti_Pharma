@@ -52,11 +52,31 @@ export default function CatalogPage() {
   })
 
   useEffect(() => {
-    getAllProducts().then((data) => {
-      setProducts(data)
-      setLoading(false)
-    })
-  }, [])
+    let cancelled = false
+    
+    getAllProducts()
+      .then((data) => {
+        if (!cancelled) {
+          setProducts(data)
+          setLoading(false)
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load products:", error)
+        if (!cancelled) {
+          setLoading(false)
+          toast({
+            title: "Failed to load products",
+            description: "Please refresh the page to try again.",
+            variant: "destructive",
+          })
+        }
+      })
+    
+    return () => {
+      cancelled = true
+    }
+  }, [toast])
 
   useEffect(() => {
     setStorageItem("catalog-view-mode", viewMode)

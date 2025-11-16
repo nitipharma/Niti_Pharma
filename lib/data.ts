@@ -8,8 +8,27 @@ let docsData: any = null
 
 async function loadProductsData() {
   if (!productsData) {
-    const response = await fetch("/data/products.json")
-    productsData = await response.json()
+    // Add timeout to prevent hanging
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+    
+    try {
+      const response = await fetch("/data/products.json", {
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load products: ${response.statusText}`)
+      }
+      productsData = await response.json()
+    } catch (error) {
+      clearTimeout(timeoutId)
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timeout: Products data took too long to load')
+      }
+      throw error
+    }
   }
   return productsData
 }
@@ -61,8 +80,13 @@ export async function getAllProducts(): Promise<Product[]> {
   await new Promise((resolve) => setTimeout(resolve, 100))
   
   if (validatedProducts === null) {
-    const data = await loadProductsData()
-    validatedProducts = validateProducts(data)
+    try {
+      const data = await loadProductsData()
+      validatedProducts = validateProducts(data)
+    } catch (error) {
+      console.error("Error loading products:", error)
+      throw error
+    }
   }
   
   return validatedProducts
