@@ -6,12 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
-import { getAllCoverage } from "@/lib/data"
+import { getAllCoverage, type Coverage } from "@/lib/data"
 import { CoverageMap } from "@/components/coverage-map"
 import { cn } from "@/lib/utils"
 
 export default function CoveragePage() {
-  const [coverage, setCoverage] = useState<ReturnType<typeof getAllCoverage> extends Promise<infer T> ? T : never>([])
+  const [coverage, setCoverage] = useState<Coverage[]>([])
   const [selectedState, setSelectedState] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
