@@ -1,8 +1,42 @@
-import productsData from "@/data/products.json"
-import innSynonymsData from "@/data/inn_synonyms.json"
-import coverageData from "@/data/coverage.json"
-import docsData from "@/data/docs.json"
 import { type Product, validateProducts } from "@/types/product"
+
+// Lazy load JSON data to avoid build issues
+let productsData: any = null
+let innSynonymsData: any = null
+let coverageData: any = null
+let docsData: any = null
+
+async function loadProductsData() {
+  if (!productsData) {
+    productsData = (await import("@/data/products.json")).default
+  }
+  return productsData
+}
+
+async function loadInnSynonymsData() {
+  if (!innSynonymsData) {
+    innSynonymsData = (await import("@/data/inn_synonyms.json")).default
+  }
+  return innSynonymsData
+}
+
+async function loadCoverageData() {
+  if (!coverageData) {
+    coverageData = (await import("@/data/coverage.json")).default
+  }
+  return coverageData
+}
+
+function loadDocsData() {
+  if (!docsData) {
+    if (typeof require !== "undefined") {
+      docsData = require("@/data/docs.json")
+    } else {
+      throw new Error("Docs data must be loaded on server")
+    }
+  }
+  return docsData
+}
 
 export type { Product } from "@/types/product"
 
@@ -27,7 +61,8 @@ export async function getAllProducts(): Promise<Product[]> {
   await new Promise((resolve) => setTimeout(resolve, 100))
   
   if (validatedProducts === null) {
-    validatedProducts = validateProducts(productsData)
+    const data = await loadProductsData()
+    validatedProducts = validateProducts(data)
   }
   
   return validatedProducts
@@ -43,12 +78,14 @@ export async function getProductsByIds(ids: string[]): Promise<Product[]> {
   return products.filter((p) => ids.includes(p.id))
 }
 
-export function getAllCoverage(): Coverage[] {
-  return coverageData as Coverage[]
+export async function getAllCoverage(): Promise<Coverage[]> {
+  const data = await loadCoverageData()
+  return data as Coverage[]
 }
 
 export function getProductDocs(productId: string): ProductDocs | null {
-  return (docsData as Record<string, ProductDocs>)[productId] || null
+  const data = loadDocsData()
+  return (data as Record<string, ProductDocs>)[productId] || null
 }
 
 export function getUniqueManufacturers(products: Product[]): string[] {
@@ -64,12 +101,13 @@ export function getUniqueCategories(products: Product[]): string[] {
   return Array.from(new Set(products.map((p) => p.therapeutic_class))).sort()
 }
 
-export function getSynonyms(): INNSynonyms {
-  return innSynonymsData as INNSynonyms
+export async function getSynonyms(): Promise<INNSynonyms> {
+  const data = await loadInnSynonymsData()
+  return data as INNSynonyms
 }
 
-export function getCanonicalINN(inn: string): string {
-  const synonyms = getSynonyms()
+export async function getCanonicalINN(inn: string): Promise<string> {
+  const synonyms = await getSynonyms()
   return synonyms[inn] || inn
 }
 

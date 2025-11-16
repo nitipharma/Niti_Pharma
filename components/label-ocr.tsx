@@ -216,7 +216,7 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
       
       // Parse the OCR text to extract structured data
       const parseTimer = new PerformanceTimer("Parse")
-      const synonyms = getSynonyms()
+      const synonyms = await getSynonyms()
       const parsed = parseLabel(data.text, synonyms)
       const parseMs = parseTimer.end()
 

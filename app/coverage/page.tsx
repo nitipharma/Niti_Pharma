@@ -11,11 +11,15 @@ import { CoverageMap } from "@/components/coverage-map"
 import { cn } from "@/lib/utils"
 
 export default function CoveragePage() {
-  const coverage = getAllCoverage()
+  const [coverage, setCoverage] = useState<ReturnType<typeof getAllCoverage> extends Promise<infer T> ? T : never>([])
   const [selectedState, setSelectedState] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
   const tableRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    getAllCoverage().then(setCoverage)
+  }, [])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
