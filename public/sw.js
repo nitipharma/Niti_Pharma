@@ -91,23 +91,54 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(networkFirst(request, CACHE_NAME))
 })
 
-// Cache-first strategy
+// Cache-first strategy with network fallback
 async function cacheFirst(request, cacheName) {
   const cache = await caches.open(cacheName)
-  const cached = await cache.match(request)
+  const url = new URL(request.url)
+  
+  // If request has cache-busting parameter, always try network first
+  if (url.searchParams.has('v')) {
+    try {
+      const response = await fetch(request)
+      if (response.ok) {
+        // Cache the response without the query parameter for future use
+        const cacheRequest = new Request(url.pathname, request)
+        await cache.put(cacheRequest, response.clone())
+      }
+      return response
+    } catch (error) {
+      console.error("[Service Worker] Network fetch failed, trying cache:", error)
+      // If network fails, try cache (without query parameter)
+      const cacheRequest = new Request(url.pathname, request)
+      const cached = await cache.match(cacheRequest)
+      if (cached) {
+        return cached
+      }
+      // If no cache, try original request
+      const originalCached = await cache.match(request)
+      if (originalCached) {
+        return originalCached
+      }
+      throw error
+    }
+  }
 
+  // Check cache first
+  const cached = await cache.match(request)
   if (cached) {
     return cached
   }
 
+  // If no cache, try network
   try {
     const response = await fetch(request)
     if (response.ok) {
-      cache.put(request, response.clone())
+      await cache.put(request, response.clone())
     }
     return response
   } catch (error) {
     console.error("[Service Worker] Cache-first fetch failed:", error)
+    // If network fails and no cache, still throw the error
     throw error
   }
 }
