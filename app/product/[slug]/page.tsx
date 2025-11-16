@@ -41,7 +41,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   const substitutes = await getProductsByIds(product.substitutes)
-  const docs = getProductDocs(product.id)
+  const docs = await getProductDocs(product.id)
 
   return (
     <div className="container py-4 sm:py-8 px-4 sm:px-6">

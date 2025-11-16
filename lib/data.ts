@@ -1,6 +1,6 @@
 import { type Product, validateProducts } from "@/types/product"
 
-// Lazy load JSON data to avoid build issues
+// Lazy load JSON data using fetch to avoid build issues
 let productsData: any = null
 let innSynonymsData: any = null
 let coverageData: any = null
@@ -8,32 +8,32 @@ let docsData: any = null
 
 async function loadProductsData() {
   if (!productsData) {
-    productsData = (await import("@/data/products.json")).default
+    const response = await fetch("/data/products.json")
+    productsData = await response.json()
   }
   return productsData
 }
 
 async function loadInnSynonymsData() {
   if (!innSynonymsData) {
-    innSynonymsData = (await import("@/data/inn_synonyms.json")).default
+    const response = await fetch("/data/inn_synonyms.json")
+    innSynonymsData = await response.json()
   }
   return innSynonymsData
 }
 
 async function loadCoverageData() {
   if (!coverageData) {
-    coverageData = (await import("@/data/coverage.json")).default
+    const response = await fetch("/data/coverage.json")
+    coverageData = await response.json()
   }
   return coverageData
 }
 
-function loadDocsData() {
+async function loadDocsData() {
   if (!docsData) {
-    if (typeof require !== "undefined") {
-      docsData = require("@/data/docs.json")
-    } else {
-      throw new Error("Docs data must be loaded on server")
-    }
+    const response = await fetch("/data/docs.json")
+    docsData = await response.json()
   }
   return docsData
 }
@@ -83,8 +83,8 @@ export async function getAllCoverage(): Promise<Coverage[]> {
   return data as Coverage[]
 }
 
-export function getProductDocs(productId: string): ProductDocs | null {
-  const data = loadDocsData()
+export async function getProductDocs(productId: string): Promise<ProductDocs | null> {
+  const data = await loadDocsData()
   return (data as Record<string, ProductDocs>)[productId] || null
 }
 

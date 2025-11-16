@@ -1,0 +1,125 @@
+{
+  "1": {
+    "sdsUrl": "/docs/sds/paracetamol-500mg-tablets.pdf",
+    "labelUrl": "/docs/label/paracetamol-500mg-tablets.pdf"
+  },
+  "2": {
+    "sdsUrl": "/docs/sds/paracetamol-650mg-tablets.pdf",
+    "labelUrl": "/docs/label/paracetamol-650mg-tablets.pdf"
+  },
+  "3": {
+    "sdsUrl": "/docs/sds/paracetamol-syrup-125mg.pdf",
+    "labelUrl": "/docs/label/paracetamol-syrup-125mg.pdf"
+  },
+  "4": {
+    "sdsUrl": "/docs/sds/amoxicillin-250mg-capsules.pdf",
+    "labelUrl": "/docs/label/amoxicillin-250mg-capsules.pdf"
+  },
+  "5": {
+    "sdsUrl": "/docs/sds/amoxicillin-500mg-capsules.pdf",
+    "labelUrl": "/docs/label/amoxicillin-500mg-capsules.pdf"
+  },
+  "6": {
+    "sdsUrl": "/docs/sds/amoxicillin-clavulanate-625mg.pdf",
+    "labelUrl": "/docs/label/amoxicillin-clavulanate-625mg.pdf"
+  },
+  "7": {
+    "sdsUrl": "/docs/sds/insulin-glargine-100iu.pdf",
+    "labelUrl": "/docs/label/insulin-glargine-100iu.pdf"
+  },
+  "8": {
+    "sdsUrl": "/docs/sds/insulin-aspart-100iu.pdf",
+    "labelUrl": "/docs/label/insulin-aspart-100iu.pdf"
+  },
+  "9": {
+    "sdsUrl": "/docs/sds/metformin-500mg-tablets.pdf",
+    "labelUrl": "/docs/label/metformin-500mg-tablets.pdf"
+  },
+  "10": {
+    "sdsUrl": "/docs/sds/metformin-1000mg-tablets.pdf",
+    "labelUrl": "/docs/label/metformin-1000mg-tablets.pdf"
+  },
+  "11": {
+    "sdsUrl": "/docs/sds/glimepiride-2mg-tablets.pdf",
+    "labelUrl": "/docs/label/glimepiride-2mg-tablets.pdf"
+  },
+  "12": {
+    "sdsUrl": "/docs/sds/atorvastatin-10mg-tablets.pdf",
+    "labelUrl": "/docs/label/atorvastatin-10mg-tablets.pdf"
+  },
+  "13": {
+    "sdsUrl": "/docs/sds/atorvastatin-20mg-tablets.pdf",
+    "labelUrl": "/docs/label/atorvastatin-20mg-tablets.pdf"
+  },
+  "14": {
+    "sdsUrl": "/docs/sds/amlodipine-5mg-tablets.pdf",
+    "labelUrl": "/docs/label/amlodipine-5mg-tablets.pdf"
+  },
+  "15": {
+    "sdsUrl": "/docs/sds/omeprazole-20mg-capsules.pdf",
+    "labelUrl": "/docs/label/omeprazole-20mg-capsules.pdf"
+  },
+  "16": {
+    "sdsUrl": "/docs/sds/pantoprazole-40mg-tablets.pdf",
+    "labelUrl": "/docs/label/pantoprazole-40mg-tablets.pdf"
+  },
+  "17": {
+    "sdsUrl": "/docs/sds/ranitidine-150mg-tablets.pdf",
+    "labelUrl": "/docs/label/ranitidine-150mg-tablets.pdf"
+  },
+  "18": {
+    "sdsUrl": "/docs/sds/levothyroxine-50mcg-tablets.pdf",
+    "labelUrl": "/docs/label/levothyroxine-50mcg-tablets.pdf"
+  },
+  "19": {
+    "sdsUrl": "/docs/sds/levothyroxine-100mcg-tablets.pdf",
+    "labelUrl": "/docs/label/levothyroxine-100mcg-tablets.pdf"
+  },
+  "20": {
+    "sdsUrl": "/docs/sds/montelukast-10mg-tablets.pdf",
+    "labelUrl": "/docs/label/montelukast-10mg-tablets.pdf"
+  },
+  "21": {
+    "sdsUrl": "/docs/sds/salbutamol-inhaler-100mcg.pdf",
+    "labelUrl": "/docs/label/salbutamol-inhaler-100mcg.pdf"
+  },
+  "22": {
+    "sdsUrl": "/docs/sds/cetirizine-10mg-tablets.pdf",
+    "labelUrl": "/docs/label/cetirizine-10mg-tablets.pdf"
+  },
+  "23": {
+    "sdsUrl": "/docs/sds/loratadine-10mg-tablets.pdf",
+    "labelUrl": "/docs/label/loratadine-10mg-tablets.pdf"
+  },
+  "24": {
+    "sdsUrl": "/docs/sds/diphenhydramine-25mg-tablets.pdf",
+    "labelUrl": "/docs/label/diphenhydramine-25mg-tablets.pdf"
+  },
+  "25": {
+    "sdsUrl": "/docs/sds/morphine-10mg-injection.pdf",
+    "labelUrl": "/docs/label/morphine-10mg-injection.pdf"
+  },
+  "26": {
+    "sdsUrl": "/docs/sds/tramadol-50mg-capsules.pdf",
+    "labelUrl": "/docs/label/tramadol-50mg-capsules.pdf"
+  },
+  "27": {
+    "sdsUrl": "/docs/sds/codeine-phosphate-15mg-tablets.pdf",
+    "labelUrl": "/docs/label/codeine-phosphate-15mg-tablets.pdf"
+  },
+  "28": {
+    "sdsUrl": "/docs/sds/vaccine-hepatitis-b-20mcg.pdf",
+    "labelUrl": "/docs/label/vaccine-hepatitis-b-20mcg.pdf"
+  },
+  "29": {
+    "sdsUrl": "/docs/sds/vaccine-tetanus-0.5ml.pdf",
+    "labelUrl": "/docs/label/vaccine-tetanus-0.5ml.pdf"
+  },
+  "30": {
+    "sdsUrl": "/docs/sds/vaccine-flu-0.5ml.pdf",
+    "labelUrl": "/docs/label/vaccine-flu-0.5ml.pdf"
+  }
+}
+
+
+
