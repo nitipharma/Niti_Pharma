@@ -93,7 +93,6 @@ export function FiltersPanel({
             <SelectContent>
               <SelectItem value="relevance">Relevance</SelectItem>
               <SelectItem value="name">Name</SelectItem>
-              <SelectItem value="price">Price</SelectItem>
               <SelectItem value="availability">Availability</SelectItem>
             </SelectContent>
           </Select>

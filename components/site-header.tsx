@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils"
 import { ThemeToggle } from "./theme-toggle"
 import { Button } from "./ui/button"
 import { Menu, X } from "lucide-react"
+import { PWAInstaller } from "./pwa-installer"
+import { OfflinePrepare } from "./offline-prepare"
 
 const navItems = [
   { href: "/catalog", label: "Catalog" },
@@ -46,6 +48,10 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="hidden sm:flex items-center gap-2">
+            <OfflinePrepare />
+            <PWAInstaller />
+          </div>
           <ThemeToggle />
           
           {/* Mobile Menu Button - Shown on mobile/tablet, hidden on large screens */}
@@ -85,6 +91,10 @@ export function SiteHeader() {
                 </Link>
               )
             })}
+            <div className="pt-2 border-t space-y-2">
+              <OfflinePrepare />
+              <PWAInstaller />
+            </div>
           </nav>
         </div>
       )}

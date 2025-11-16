@@ -1,26 +1,46 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { Breadcrumb } from "@/components/breadcrumb"
 import { SearchBar } from "@/components/search-bar"
 import { FiltersPanel } from "@/components/filters-panel"
 import { CatalogGrid } from "@/components/catalog-grid"
 import { CatalogTable } from "@/components/catalog-table"
 import { EmptyState } from "@/components/empty-state"
+import { LabelOCR, type OCRResult } from "@/components/label-ocr"
+import { ConfirmCompositionSheet } from "@/components/confirm-composition-sheet"
+import { MatchResultsPanel } from "@/components/match-results-panel"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
-import { Grid3x3, Table as TableIcon, Filter, X } from "lucide-react"
-import { getAllProducts, getUniqueManufacturers, getUniqueCategories } from "@/lib/data"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Grid3x3, Table as TableIcon, Filter, X, Camera } from "lucide-react"
+import { getAllProducts, getUniqueManufacturers, getUniqueCategories, getProductsByIds } from "@/lib/data"
 import { filterProducts, type Filters } from "@/lib/filters"
 import { getStorageItem, setStorageItem } from "@/lib/storage"
 import { type Product } from "@/lib/data"
+import { type ParsedLabel } from "@/lib/parse-label"
+import { matchProducts, type MatchedProduct, type MatchResults, type MatchTier } from "@/lib/match"
+import { recordMetric } from "@/lib/metrics"
+import { useToast } from "@/components/ui/use-toast"
 export default function CatalogPage() {
+  const { toast } = useToast()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<"grid" | "table">(
     getStorageItem("catalog-view-mode", "grid")
   )
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [ocrDialogOpen, setOcrDialogOpen] = useState(false)
+  const [confirmSheetOpen, setConfirmSheetOpen] = useState(false)
+  const [parsedData, setParsedData] = useState<ParsedLabel | null>(null)
+  const [matchResults, setMatchResults] = useState<MatchResults | null>(null)
+  const [matching, setMatching] = useState(false)
   const [filters, setFilters] = useState<Filters>({
     search: "",
     manufacturers: [],
@@ -60,6 +80,124 @@ export default function CatalogPage() {
     setFilters((prev) => ({ ...prev, search }))
   }
 
+  const handleOCRResult = async (result: OCRResult) => {
+    // Fast path: Barcode found - skip parsing and go directly to product
+    if (result.barcodeProductId) {
+      const product = products.find((p) => p.id === result.barcodeProductId)
+      if (product) {
+        setOcrDialogOpen(false)
+        
+        // Create EXACT match result
+        const matchResult: MatchResults = {
+          results: [
+            {
+              product,
+              tier: "EXACT",
+              score: 200, // Perfect match
+              notes: ["Barcode match"],
+            },
+          ],
+          notAvailable: false,
+        }
+        
+        // Add substitutes as CLOSE matches
+        if (product.substitutes && product.substitutes.length > 0) {
+          const substitutes = await getProductsByIds(product.substitutes)
+          const closeMatches = substitutes.map((sub) => ({
+            product: sub,
+            tier: "CLOSE" as MatchTier,
+            score: 150,
+            notes: ["Suggested substitute"],
+          }))
+          matchResult.results.push(...closeMatches)
+        }
+        
+        setMatchResults(matchResult)
+        
+        toast({
+          title: "Barcode detected!",
+          description: `Found product: ${product.brand_name}`,
+        })
+        return
+      }
+    }
+
+    if (!result.text.trim()) {
+      toast({
+        title: "No text found",
+        description: "Could not extract any text from the image.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // If parsed data is available, show confirmation sheet
+    if (result.parsed && result.parsed.actives.length > 0) {
+      setParsedData(result.parsed)
+      setOcrDialogOpen(false)
+      setConfirmSheetOpen(true)
+    } else {
+      // Fallback to raw text search
+      setFilters((prev) => ({ ...prev, search: result.text.trim() }))
+      setOcrDialogOpen(false)
+      setMatchResults(null) // Clear any previous results
+      
+      toast({
+        title: "Text extracted",
+        description: `Found ${result.lines.length} lines. Could not parse composition, using raw text search.`,
+      })
+    }
+  }
+
+  const performMatching = useCallback(async (parsed: ParsedLabel) => {
+    setMatching(true)
+    try {
+      const results = await matchProducts(parsed, products)
+      setMatchResults(results)
+      setConfirmSheetOpen(false)
+      
+      if (results.notAvailable) {
+        toast({
+          title: "No matches found",
+          description: "We couldn't find any matching products in our inventory.",
+          variant: "destructive",
+        })
+      } else {
+        const exactCount = results.results.filter((r) => r.tier === "EXACT").length
+        const closeCount = results.results.filter((r) => r.tier === "CLOSE").length
+        const altCount = results.results.filter((r) => r.tier === "ALTERNATIVE").length
+        
+        toast({
+          title: "Matches found",
+          description: `${exactCount} exact, ${closeCount} close, ${altCount} alternative matches.`,
+        })
+      }
+    } catch (error) {
+      console.error("Matching error:", error)
+      recordMetric({
+        error: error instanceof Error ? error.message : "Unknown matching error",
+      })
+      toast({
+        title: "Matching failed",
+        description: error instanceof Error ? error.message : "An error occurred while matching products.",
+        variant: "destructive",
+      })
+    } finally {
+      setMatching(false)
+    }
+  }, [products, toast])
+
+  const handleConfirmComposition = (parsed: ParsedLabel) => {
+    setParsedData(parsed)
+    performMatching(parsed)
+  }
+
+  // Handle edits from confirmation sheet (just sync state)
+  const handleCompositionEdit = useCallback((parsed: ParsedLabel) => {
+    setParsedData(parsed)
+    // Matching happens instantly when user clicks "Search Inventory"
+  }, [])
+
   const hasActiveFilters =
     filters.manufacturers.length > 0 ||
     filters.categories.length > 0 ||
@@ -94,6 +232,17 @@ export default function CatalogPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setOcrDialogOpen(true)
+              setMatchResults(null) // Clear previous results
+            }}
+          >
+            <Camera className="h-4 w-4 mr-2" />
+            From photo
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -180,34 +329,90 @@ export default function CatalogPage() {
         )}
 
         <div className="lg:col-span-3">
-          <div className="mb-4 text-sm text-muted-foreground">
-            Showing {filteredProducts.length} of {products.length} products
-          </div>
-          {filteredProducts.length === 0 ? (
-            <EmptyState
-              title="No products found"
-              description="Try adjusting your filters or search terms to find what you're looking for."
-              action={{
-                label: "Clear filters",
-                onClick: () =>
-                  setFilters({
-                    search: "",
-                    manufacturers: [],
-                    categories: [],
-                    schedules: [],
-                    coldChain: null,
-                    inStock: null,
-                    sort: "relevance",
-                  }),
-              }}
-            />
-          ) : viewMode === "grid" ? (
-            <CatalogGrid products={filteredProducts} />
+          {matchResults ? (
+            // Show match results
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Search results from photo
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setMatchResults(null)
+                    setParsedData(null)
+                  }}
+                >
+                  Clear results
+                </Button>
+              </div>
+              {matching ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-32 w-full" />
+                  <Skeleton className="h-32 w-full" />
+                  <Skeleton className="h-32 w-full" />
+                </div>
+              ) : (
+                <MatchResultsPanel
+                  results={matchResults.results}
+                  notAvailable={matchResults.notAvailable}
+                />
+              )}
+            </div>
           ) : (
-            <CatalogTable products={filteredProducts} />
+            // Show regular catalog
+            <>
+              <div className="mb-4 text-sm text-muted-foreground">
+                Showing {filteredProducts.length} of {products.length} products
+              </div>
+              {filteredProducts.length === 0 ? (
+                <EmptyState
+                  title="No products found"
+                  description="Try adjusting your filters or search terms to find what you're looking for."
+                  action={{
+                    label: "Clear filters",
+                    onClick: () =>
+                      setFilters({
+                        search: "",
+                        manufacturers: [],
+                        categories: [],
+                        schedules: [],
+                        coldChain: null,
+                        inStock: null,
+                        sort: "relevance",
+                      }),
+                  }}
+                />
+              ) : viewMode === "grid" ? (
+                <CatalogGrid products={filteredProducts} />
+              ) : (
+                <CatalogTable products={filteredProducts} />
+              )}
+            </>
           )}
         </div>
       </div>
+
+      <Dialog open={ocrDialogOpen} onOpenChange={setOcrDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Extract Text from Label Photo</DialogTitle>
+            <DialogDescription>
+              Upload an image of a pharmaceutical label to extract text using OCR.
+            </DialogDescription>
+          </DialogHeader>
+          <LabelOCR onResult={handleOCRResult} onClose={() => setOcrDialogOpen(false)} />
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmCompositionSheet
+        open={confirmSheetOpen}
+        onOpenChange={setConfirmSheetOpen}
+        parsed={parsedData}
+        onConfirm={handleConfirmComposition}
+        onEdit={handleCompositionEdit}
+      />
     </div>
   )
 }

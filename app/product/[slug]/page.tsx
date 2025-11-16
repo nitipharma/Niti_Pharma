@@ -8,7 +8,7 @@ import { AvailabilityPill } from "@/components/availability-pill"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { getProductBySlug, getProductsByIds, getProductDocs } from "@/lib/data"
+import { getProductBySlug, getProductsByIds, getProductDocs, getManufacturer, getStrength, getFormDisplay } from "@/lib/data"
 import { FileText, ExternalLink } from "lucide-react"
 import type { Metadata } from "next"
 
@@ -27,8 +27,8 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   }
 
   return {
-    title: `${product.name} - Niti Pharma`,
-    description: `${product.name} by ${product.manufacturer}. ${product.category} - ${product.strength}`,
+    title: `${product.brand_name} - Niti Pharma`,
+    description: `${product.brand_name} by ${getManufacturer(product)}. ${product.therapeutic_class} - ${getStrength(product)}`,
   }
 }
 
@@ -48,7 +48,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <Breadcrumb
         items={[
           { label: "Catalog", href: "/catalog" },
-          { label: product.name },
+          { label: product.brand_name },
         ]}
       />
 
@@ -57,7 +57,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-muted mb-4">
             <Image
               src={product.images[0] || "/api/placeholder/400/400"}
-              alt={product.name}
+              alt={product.brand_name}
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 50vw"
@@ -68,18 +68,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="space-y-4 sm:space-y-6">
           <div>
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4">
-              <h1 className="text-2xl sm:text-3xl font-bold pr-2">{product.name}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold pr-2">{product.brand_name}</h1>
               <BadgeSchedule schedule={product.schedule} />
             </div>
             <p className="text-base sm:text-lg text-muted-foreground mb-4">
-              {product.manufacturer}
+              {getManufacturer(product)}
             </p>
             <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 flex-wrap">
               <BadgeColdChain coldChain={product.cold_chain} />
               <AvailabilityPill inStock={product.in_stock} />
             </div>
-            <div className="text-2xl sm:text-3xl font-bold text-primary mb-4 sm:mb-6">
-              ₹{product.price_mrp.toFixed(2)}
+            <div className="text-sm text-muted-foreground mb-4 sm:mb-6">
+              <p className="font-medium">{getStrength(product)}</p>
+              <p>{product.pack_size}</p>
             </div>
           </div>
 
@@ -93,7 +94,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   <TableBody>
                     <TableRow>
                       <TableCell className="font-medium">NDC</TableCell>
-                      <TableCell className="break-all">{product.ndc}</TableCell>
+                      <TableCell className="break-all">{product.ndc || "N/A"}</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell className="font-medium">GTIN</TableCell>
@@ -104,24 +105,31 @@ export default async function ProductPage({ params }: ProductPageProps) {
                       <TableCell className="break-all">{product.hsn}</TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell className="font-medium">Category</TableCell>
-                      <TableCell>{product.category}</TableCell>
+                      <TableCell className="font-medium">Therapeutic Class</TableCell>
+                      <TableCell>{product.therapeutic_class}</TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell className="font-medium">Form</TableCell>
-                      <TableCell>{product.form}</TableCell>
+                      <TableCell className="font-medium">Dosage Form</TableCell>
+                      <TableCell>{getFormDisplay(product)}</TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell className="font-medium">Strength</TableCell>
-                      <TableCell>{product.strength}</TableCell>
+                      <TableCell className="font-medium">Release Type</TableCell>
+                      <TableCell>{product.release_type}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">Active Ingredients</TableCell>
+                      <TableCell>
+                        {product.actives.map((active, idx) => (
+                          <span key={idx}>
+                            {active.inn} {active.mg}mg{product.dosage_form === "syrup" ? "/5ml" : ""}
+                            {idx < product.actives.length - 1 ? " + " : ""}
+                          </span>
+                        ))}
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell className="font-medium">Pack Size</TableCell>
                       <TableCell>{product.pack_size}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">Storage</TableCell>
-                      <TableCell>{product.storage}</TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -166,10 +174,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
                     href={`/product/${sub.slug}`}
                     className="font-semibold hover:underline text-sm sm:text-base"
                   >
-                    {sub.name}
+                    {sub.brand_name}
                   </Link>
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    {sub.manufacturer}
+                    {getManufacturer(sub)}
                   </p>
                 </CardHeader>
                 <CardContent>
@@ -177,8 +185,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
                     <BadgeSchedule schedule={sub.schedule} />
                     <AvailabilityPill inStock={sub.in_stock} />
                   </div>
-                  <p className="text-base sm:text-lg font-semibold text-primary">
-                    ₹{sub.price_mrp.toFixed(2)}
+                  <p className="text-xs text-muted-foreground">
+                    {getStrength(sub)} • {sub.pack_size}
                   </p>
                 </CardContent>
               </Card>

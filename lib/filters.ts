@@ -1,6 +1,6 @@
-import { Product } from "./data"
+import { Product, getManufacturer } from "./data"
 
-export type SortOption = "relevance" | "name" | "price" | "availability"
+export type SortOption = "relevance" | "name" | "availability"
 
 export type Filters = {
   search: string
@@ -20,23 +20,24 @@ export function filterProducts(products: Product[], filters: Filters): Product[]
     const searchLower = filters.search.toLowerCase()
     filtered = filtered.filter(
       (p) =>
-        p.name.toLowerCase().includes(searchLower) ||
-        p.ndc.toLowerCase().includes(searchLower) ||
-        p.manufacturer.toLowerCase().includes(searchLower)
+        p.brand_name.toLowerCase().includes(searchLower) ||
+        (p.ndc && p.ndc.toLowerCase().includes(searchLower)) ||
+        getManufacturer(p).toLowerCase().includes(searchLower) ||
+        p.actives.some(a => a.inn.toLowerCase().includes(searchLower))
     )
   }
 
   // Manufacturer filter
   if (filters.manufacturers.length > 0) {
     filtered = filtered.filter((p) =>
-      filters.manufacturers.includes(p.manufacturer)
+      filters.manufacturers.includes(getManufacturer(p))
     )
   }
 
-  // Category filter
+  // Category filter (therapeutic_class)
   if (filters.categories.length > 0) {
     filtered = filtered.filter((p) =>
-      filters.categories.includes(p.category)
+      filters.categories.includes(p.therapeutic_class)
     )
   }
 
@@ -60,10 +61,7 @@ export function filterProducts(products: Product[], filters: Filters): Product[]
   // Sort
   switch (filters.sort) {
     case "name":
-      filtered.sort((a, b) => a.name.localeCompare(b.name))
-      break
-    case "price":
-      filtered.sort((a, b) => a.price_mrp - b.price_mrp)
+      filtered.sort((a, b) => a.brand_name.localeCompare(b.brand_name))
       break
     case "availability":
       filtered.sort((a, b) => {

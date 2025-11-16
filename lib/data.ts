@@ -1,27 +1,10 @@
 import productsData from "@/data/products.json"
+import innSynonymsData from "@/data/inn_synonyms.json"
 import coverageData from "@/data/coverage.json"
 import docsData from "@/data/docs.json"
+import { type Product, validateProducts } from "@/types/product"
 
-export type Product = {
-  id: string
-  slug: string
-  name: string
-  ndc: string
-  gtin: string
-  hsn: string
-  manufacturer: string
-  category: string
-  form: string
-  strength: string
-  pack_size: string
-  schedule: "OTC" | "Rx" | "Schedule H"
-  cold_chain: boolean
-  in_stock: boolean
-  price_mrp: number
-  storage: string
-  images: string[]
-  substitutes: string[]
-}
+export type { Product } from "@/types/product"
 
 export type Coverage = {
   state: string
@@ -34,10 +17,20 @@ export type ProductDocs = {
   labelUrl: string
 }
 
+export type INNSynonyms = Record<string, string>
+
+// Cache validated products
+let validatedProducts: Product[] | null = null
+
 export async function getAllProducts(): Promise<Product[]> {
   // Simulate network latency
   await new Promise((resolve) => setTimeout(resolve, 100))
-  return productsData as Product[]
+  
+  if (validatedProducts === null) {
+    validatedProducts = validateProducts(productsData)
+  }
+  
+  return validatedProducts
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
@@ -59,12 +52,47 @@ export function getProductDocs(productId: string): ProductDocs | null {
 }
 
 export function getUniqueManufacturers(products: Product[]): string[] {
-  return Array.from(new Set(products.map((p) => p.manufacturer))).sort()
+  // Extract manufacturer from brand_name (first word before space)
+  const manufacturers = products.map((p) => {
+    const parts = p.brand_name.split(" ")
+    return parts[0]
+  })
+  return Array.from(new Set(manufacturers)).sort()
 }
 
 export function getUniqueCategories(products: Product[]): string[] {
-  return Array.from(new Set(products.map((p) => p.category))).sort()
+  return Array.from(new Set(products.map((p) => p.therapeutic_class))).sort()
 }
 
+export function getSynonyms(): INNSynonyms {
+  return innSynonymsData as INNSynonyms
+}
 
+export function getCanonicalINN(inn: string): string {
+  const synonyms = getSynonyms()
+  return synonyms[inn] || inn
+}
 
+// Helper functions for component compatibility
+export function getManufacturer(product: Product): string {
+  const parts = product.brand_name.split(" ")
+  return parts[0]
+}
+
+export function getStrength(product: Product): string {
+  if (product.dosage_form === "syrup") {
+    return product.actives.map(a => `${a.mg}mg/5ml`).join(" + ")
+  }
+  return product.actives.map(a => `${a.mg}mg`).join(" + ")
+}
+
+export function getFormDisplay(product: Product): string {
+  const formMap: Record<string, string> = {
+    tablet: "Tablet",
+    capsule: "Capsule",
+    syrup: "Syrup",
+    injection: "Injection",
+    ointment: "Ointment"
+  }
+  return formMap[product.dosage_form] || product.dosage_form
+}

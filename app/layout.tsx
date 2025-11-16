@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { Toaster } from "@/components/ui/toaster"
+import { ServiceWorkerRegister } from "@/components/service-worker-register"
+import { DiagnosticsProvider } from "@/components/diagnostics-provider"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
@@ -16,6 +18,13 @@ export const metadata: Metadata = {
     description: "Trusted B2B pharmaceutical distributor serving pharmacies nationwide.",
     type: "website",
   },
+  manifest: "/manifest.webmanifest",
+  themeColor: "#0f172a",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Niti Pharma",
+  },
 }
 
 export default function RootLayout({
@@ -26,6 +35,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans`}>
+        <ServiceWorkerRegister />
+        <DiagnosticsProvider />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
