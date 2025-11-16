@@ -198,14 +198,16 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
 
       // Perform OCR with timing
       const ocrTimer = new PerformanceTimer("OCR")
-      const { data } = await worker.recognize(canvas, {
-        logger: (m) => {
-          if (m.status === "recognizing text") {
-            const progressValue = 40 + (m.progress || 0) * 0.6 // 40-100%
-            setProgress(Math.round(progressValue))
-          }
-        },
-      })
+      
+      // Set up progress callback
+      worker.onProgress = (m) => {
+        if (m.status === "recognizing text") {
+          const progressValue = 40 + (m.progress || 0) * 0.6 // 40-100%
+          setProgress(Math.round(progressValue))
+        }
+      }
+      
+      const { data } = await worker.recognize(canvas)
       const ocrMs = ocrTimer.end()
 
       setProgress(100)
