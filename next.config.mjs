@@ -45,14 +45,14 @@ const nextConfig = {
         crypto: false,
       };
       
-      // Ignore native modules in client bundle
-      config.externals = config.externals || [];
-      config.externals.push({
-        'onnxruntime-node': 'commonjs onnxruntime-node',
-      });
+      // Ignore onnxruntime-node package in client bundle
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'onnxruntime-node': false,
+      };
     }
     
-    // Ignore .node files
+    // Ignore .node files (native binaries)
     config.module.rules.push({
       test: /\.node$/,
       use: 'ignore-loader',
