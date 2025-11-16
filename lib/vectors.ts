@@ -38,7 +38,7 @@ async function loadEmbeddings(): Promise<void> {
       if (!metaResponse.ok) {
         throw new Error(`Failed to load metadata: ${metaResponse.statusText}`)
       }
-      metadata = await metaResponse.json()
+      metadata = (await metaResponse.json()) as EmbeddingMetadata
 
       // Load binary embeddings
       const binResponse = await fetch("/data/product_embeddings.bin")
@@ -51,6 +51,9 @@ async function loadEmbeddings(): Promise<void> {
       embeddingsData = new Float32Array(arrayBuffer)
 
       // Validate dimensions
+      if (!metadata) {
+        throw new Error("Metadata not loaded")
+      }
       const expectedSize = metadata.count * metadata.dim
       if (embeddingsData.length !== expectedSize) {
         throw new Error(

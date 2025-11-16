@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -44,6 +42,9 @@ This email was sent from the Niti Pharma contact form.
         { status: 500 }
       )
     }
+
+    // Initialize Resend only when needed (at runtime, not build time)
+    const resend = new Resend(process.env.RESEND_API_KEY)
 
     const { data, error } = await resend.emails.send({
       from: "Niti Pharma Contact Form <onboarding@resend.dev>",

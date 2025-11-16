@@ -30,21 +30,7 @@ export async function decodeBarcode(
     ctx.drawImage(imageElement, 0, 0)
   }
 
-  try {
-    // Try decoding from the canvas
-    // ZXing can decode from canvas directly
-    const result = await reader.decodeFromCanvas(canvas)
-    if (result && result.getText()) {
-      return result.getText()
-    }
-  } catch (error) {
-    // NotFoundException is expected if no barcode found
-    if (!(error instanceof NotFoundException)) {
-      console.warn("Barcode decode error:", error)
-    }
-  }
-  
-  // Also try converting canvas to image element (some ZXing versions prefer this)
+  // Convert canvas to image element for ZXing decoding
   try {
     const img = new Image()
     img.src = canvas.toDataURL()
@@ -59,7 +45,7 @@ export async function decodeBarcode(
   } catch (error) {
     // NotFoundException is expected if no barcode found
     if (!(error instanceof NotFoundException)) {
-      // Ignore - we'll try contrast-boosted version
+      console.warn("Barcode decode error:", error)
     }
   }
 
@@ -88,7 +74,13 @@ export async function decodeBarcode(
     ctx.putImageData(imageData, 0, 0)
 
     // Try decoding from contrast-boosted image
-    const result = await reader.decodeFromCanvas(canvas)
+    const img = new Image()
+    img.src = canvas.toDataURL()
+    await new Promise((resolve, reject) => {
+      img.onload = resolve
+      img.onerror = reject
+    })
+    const result = await reader.decodeFromImageElement(img)
     if (result && result.getText()) {
       return result.getText()
     }

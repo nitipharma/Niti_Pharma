@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback, useEffect } from "react"
+import NextImage from "next/image"
 import { createWorker, type Worker } from "tesseract.js"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -244,7 +245,7 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
 
       // Callback with result
       setTimeout(() => {
-        onResult(result)
+        onResult(ocrResult)
         setIsProcessing(false)
       }, 500)
     } catch (error) {
@@ -360,11 +361,14 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
 
         {preview && !isProcessing && (
           <div className="space-y-4">
-            <div className="relative">
-              <img
+            <div className="relative max-h-64 w-full">
+              <NextImage
                 src={preview}
                 alt="Preview"
-                className="max-h-64 w-full object-contain rounded border"
+                width={800}
+                height={600}
+                className="w-full h-auto max-h-64 object-contain rounded border"
+                unoptimized
               />
               <Button
                 variant="ghost"
@@ -392,11 +396,14 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
         {isProcessing && (
           <div className="space-y-4">
             {preview && (
-              <div className="relative">
-                <img
+              <div className="relative max-h-64 w-full">
+                <NextImage
                   src={preview}
                   alt="Processing"
-                  className="max-h-64 w-full object-contain rounded border opacity-50"
+                  width={800}
+                  height={600}
+                  className="w-full h-auto max-h-64 object-contain rounded border opacity-50"
+                  unoptimized
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Loader2 className="h-12 w-12 animate-spin text-primary" />

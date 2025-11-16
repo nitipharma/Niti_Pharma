@@ -71,7 +71,7 @@ function sameINNSet(actives1: ParsedActive[], actives2: { inn: string; mg: numbe
     return false
   }
 
-  for (const inn of set1) {
+  for (const inn of Array.from(set1)) {
     if (!set2.has(inn)) {
       return false
     }
@@ -98,7 +98,7 @@ function meanRelativeStrengthError(
 
   const errors: number[] = []
 
-  for (const [inn, mg1] of map1) {
+  for (const [inn, mg1] of Array.from(map1)) {
     const mg2 = map2.get(inn)
     if (mg2 !== undefined) {
       const avg = (mg1 + mg2) / 2
@@ -152,8 +152,8 @@ function brandSimilarity(brand1?: string, brand2?: string): number {
   // Simple word overlap
   const words1 = new Set(b1.split(/\s+/))
   const words2 = new Set(b2.split(/\s+/))
-  const intersection = new Set([...words1].filter((w) => words2.has(w)))
-  const union = new Set([...words1, ...words2])
+  const intersection = new Set(Array.from(words1).filter((w) => words2.has(w)))
+  const union = new Set([...Array.from(words1), ...Array.from(words2)])
 
   if (union.size === 0) {
     return 0
@@ -316,7 +316,7 @@ export async function matchProducts(
     // Include if at least one INN matches (partial match)
     const parsedINNs = new Set(parsed.actives.map((a) => normalizeINN(a.inn)))
     const productINNs = new Set(m.product.actives.map((a) => normalizeINN(a.inn)))
-    const hasCommonINN = [...parsedINNs].some((inn) => productINNs.has(inn))
+    const hasCommonINN = Array.from(parsedINNs).some((inn) => productINNs.has(inn))
     
     if (hasCommonINN) {
       return true
