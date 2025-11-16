@@ -200,7 +200,7 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
       const ocrTimer = new PerformanceTimer("OCR")
       
       // Perform OCR (progress tracking removed for compatibility)
-      const { data } = await worker.recognize(canvas)
+      const result = await worker.recognize(canvas)
       const ocrMs = ocrTimer.end()
       
       // Update progress after OCR completes
@@ -209,13 +209,17 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
       setProgress(100)
       setStatus("Parsing label data...")
 
-      // Process result
-      const lines = data.lines.map((line) => line.text.trim()).filter((line) => line.length > 0)
+      // Process result - tesseract.js v6 returns data directly
+      const data = result.data
+      const text = data.text || ""
+      
+      // Extract lines from the text
+      const lines = text.split(/\n/).map((line) => line.trim()).filter((line) => line.length > 0)
       
       // Parse the OCR text to extract structured data
       const parseTimer = new PerformanceTimer("Parse")
       const synonyms = await getSynonyms()
-      const parsed = parseLabel(data.text, synonyms)
+      const parsed = parseLabel(text, synonyms)
       const parseMs = parseTimer.end()
 
       // Record metrics
@@ -225,8 +229,8 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
         barcode_detected: false,
       })
       
-      const result: OCRResult = {
-        text: data.text,
+      const ocrResult: OCRResult = {
+        text: text,
         lines,
         imageMeta: {
           width: canvas.width,
