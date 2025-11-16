@@ -1,8 +1,22 @@
-import { pipeline, env } from "@xenova/transformers"
+// Client-side only - use dynamic import to avoid SSR issues
+let transformersModule: any = null
 
-// Disable local model files, use CDN
-env.allowLocalModels = false
-env.allowRemoteModels = true
+async function getTransformers() {
+  if (typeof window === "undefined") {
+    throw new Error("Embeddings can only be used in the browser")
+  }
+  
+  if (!transformersModule) {
+    transformersModule = await import("@xenova/transformers")
+    const { env } = transformersModule
+    
+    // Configure for browser usage only
+    env.allowLocalModels = false
+    env.allowRemoteModels = true
+  }
+  
+  return transformersModule
+}
 
 // Use a smaller model for faster loading
 const DEFAULT_MODEL = "Xenova/all-MiniLM-L6-v2"
@@ -16,6 +30,10 @@ const embeddingCache = new Map<string, Float32Array>()
  * Prepare the embedding model (prefetch for faster first use)
  */
 export async function prepareModel(): Promise<void> {
+  if (typeof window === "undefined") {
+    return Promise.resolve()
+  }
+  
   if (embeddingPipeline) {
     return Promise.resolve()
   }
@@ -26,6 +44,7 @@ export async function prepareModel(): Promise<void> {
 
   modelLoadingPromise = (async () => {
     try {
+      const { pipeline } = await getTransformers()
       embeddingPipeline = await pipeline(
         "feature-extraction",
         DEFAULT_MODEL,
