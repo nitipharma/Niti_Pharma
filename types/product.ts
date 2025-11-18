@@ -15,6 +15,7 @@ export const DosageFormSchema = z.enum([
   "syrup",
   "injection",
   "ointment",
+  "powder",
 ])
 
 export type DosageForm = z.infer<typeof DosageFormSchema>

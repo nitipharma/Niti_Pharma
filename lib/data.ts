@@ -29,7 +29,30 @@ async function loadProductsData() {
         throw new Error(`HTTP ${response.status}: ${response.statusText}. Make sure the dev server is running at http://localhost:3000`)
       }
       
-      const jsonData = await response.json()
+      // Get response as text first to check for encoding issues
+      const textData = await response.text()
+      
+      // Remove BOM if present (UTF-8 BOM is EF BB BF)
+      let cleanText = textData.replace(/^\uFEFF/, '').trim()
+      
+      // Check if response looks like HTML (might be an error page)
+      if (cleanText.trim().startsWith('<!')) {
+        throw new Error('Received HTML instead of JSON. The server might be returning an error page.')
+      }
+      
+      let jsonData
+      try {
+        jsonData = JSON.parse(cleanText)
+      } catch (parseError) {
+        // Log more details about the parse error
+        const errorMsg = parseError instanceof Error ? parseError.message : 'Unknown error'
+        const preview = cleanText.substring(0, 500)
+        console.error('JSON parse error:', errorMsg)
+        console.error('Response preview (first 500 chars):', preview)
+        console.error('Response length:', cleanText.length)
+        console.error('Response starts with:', cleanText.substring(0, 50))
+        throw new Error(`Failed to parse JSON: ${errorMsg}. Response preview: ${preview.substring(0, 100)}`)
+      }
       
       // Validate it's an array
       if (!Array.isArray(jsonData)) {
@@ -183,7 +206,8 @@ export function getFormDisplay(product: Product): string {
     capsule: "Capsule",
     syrup: "Syrup",
     injection: "Injection",
-    ointment: "Ointment"
+    ointment: "Ointment",
+    powder: "Powder"
   }
   return formMap[product.dosage_form] || product.dosage_form
 }

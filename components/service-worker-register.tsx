@@ -8,39 +8,50 @@ export function ServiceWorkerRegister() {
       typeof window !== "undefined" &&
       "serviceWorker" in navigator
     ) {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then((registration) => {
-          console.log("Service Worker registered:", registration)
+      // Only register service worker in production
+      if (process.env.NODE_ENV === "production") {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then((registration) => {
+            console.log("Service Worker registered:", registration)
 
-          // Check for updates
-          registration.addEventListener("updatefound", () => {
-            const newWorker = registration.installing
-            if (newWorker) {
-              newWorker.addEventListener("statechange", () => {
-                if (
-                  newWorker.state === "installed" &&
-                  navigator.serviceWorker.controller
-                ) {
-                  // New service worker available
-                  console.log("New service worker available")
-                }
-              })
-            }
+            // Check for updates
+            registration.addEventListener("updatefound", () => {
+              const newWorker = registration.installing
+              if (newWorker) {
+                newWorker.addEventListener("statechange", () => {
+                  if (
+                    newWorker.state === "installed" &&
+                    navigator.serviceWorker.controller
+                  ) {
+                    // New service worker available
+                    console.log("New service worker available")
+                  }
+                })
+              }
+            })
           })
-        })
-        .catch((error) => {
-          console.error("Service Worker registration failed:", error)
-        })
+          .catch((error) => {
+            console.error("Service Worker registration failed:", error)
+          })
 
-      // Listen for service worker updates
-      let refreshing = false
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        if (!refreshing) {
-          refreshing = true
-          window.location.reload()
-        }
-      })
+        // Listen for service worker updates
+        let refreshing = false
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          if (!refreshing) {
+            refreshing = true
+            window.location.reload()
+          }
+        })
+      } else {
+        // In development, unregister any existing service workers
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const registration of registrations) {
+            registration.unregister()
+            console.log("Service Worker unregistered for development")
+          }
+        })
+      }
     }
   }, [])
 

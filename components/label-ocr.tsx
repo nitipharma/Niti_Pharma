@@ -32,18 +32,33 @@ interface LabelOCRProps {
 async function createCachedWorker(): Promise<Worker> {
   // Tesseract.js v4+ automatically caches traineddata in IndexedDB
   // The cache key is managed internally by tesseract.js
-  const worker = await createWorker("eng", 1, {
-    logger: (m) => {
-      // Suppress verbose logging, but keep progress updates
-      if (m.status === "recognizing text") {
-        // Progress is handled in the recognize call
-      }
-    },
-    // Tesseract.js will automatically use IndexedDB for caching
-    // No additional configuration needed
-  })
+  try {
+    const worker = await createWorker("eng", 1, {
+      logger: (m) => {
+        // Suppress verbose logging, but keep progress updates
+        if (m.status === "recognizing text") {
+          // Progress is handled in the recognize call
+        }
+      },
+      // Use CDN for language models (jsDelivr is the default)
+      // This will download the model on first use and cache it in IndexedDB
+      // For local development, ensure you have internet connection for first-time model download
+    })
 
-  return worker
+    return worker
+  } catch (error) {
+    // If worker creation fails, provide a helpful error message
+    if (error instanceof Error) {
+      if (error.message.includes('fetch') || error.message.includes('network')) {
+        throw new Error(
+          'Failed to download OCR language model. Please check your internet connection. ' +
+          'Tesseract.js needs to download the English language model on first use (about 4MB). ' +
+          'After the first download, it will be cached locally for offline use.'
+        )
+      }
+    }
+    throw error
+  }
 }
 
 // Image preprocessing: resize, grayscale, contrast
@@ -190,7 +205,22 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
 
       // Create worker with caching
       if (!workerRef.current) {
-        workerRef.current = await createCachedWorker()
+        try {
+          workerRef.current = await createCachedWorker()
+        } catch (error) {
+          // If worker creation fails, provide helpful error message
+          const errorMessage = error instanceof Error ? error.message : "Unknown error"
+          if (errorMessage.includes("download") || errorMessage.includes("fetch") || errorMessage.includes("network")) {
+            throw new Error(
+              "OCR engine initialization failed. " +
+              "Tesseract.js needs to download the English language model (~4MB) on first use. " +
+              "Please ensure you have an active internet connection. " +
+              "After the first download, the model will be cached for offline use. " +
+              `Error: ${errorMessage}`
+            )
+          }
+          throw error
+        }
       }
       const worker = workerRef.current
 
@@ -253,7 +283,19 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
       recordMetric({
         error: error instanceof Error ? error.message : "Unknown error",
       })
-      alert(`OCR failed: ${error instanceof Error ? error.message : "Unknown error"}`)
+      
+      // Provide more helpful error messages
+      let errorMessage = error instanceof Error ? error.message : "Unknown error"
+      
+      if (errorMessage.includes("fetch") || errorMessage.includes("network") || errorMessage.includes("download")) {
+        errorMessage = 
+          "Failed to load OCR engine. " +
+          "Tesseract.js needs to download the English language model (~4MB) on first use. " +
+          "Please check your internet connection and try again. " +
+          "After the first download, the model will be cached for offline use."
+      }
+      
+      alert(`OCR failed: ${errorMessage}`)
       setIsProcessing(false)
       setStatus("Error occurred")
     }
