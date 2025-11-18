@@ -189,11 +189,17 @@ export async function getCanonicalINN(inn: string): Promise<string> {
 
 // Helper functions for component compatibility
 export function getManufacturer(product: Product): string {
+  if (!product.brand_name) {
+    return "N/A"
+  }
   const parts = product.brand_name.split(" ")
-  return parts[0]
+  return parts[0] || "N/A"
 }
 
 export function getStrength(product: Product): string {
+  if (!product.actives || product.actives.length === 0) {
+    return "N/A"
+  }
   if (product.dosage_form === "syrup") {
     return product.actives.map(a => `${a.mg}mg/5ml`).join(" + ")
   }

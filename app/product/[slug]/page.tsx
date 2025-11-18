@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
-import Image from "next/image"
 import Link from "next/link"
+import { ProductImage } from "@/components/product-image"
 import { Breadcrumb } from "@/components/breadcrumb"
 import { BadgeSchedule } from "@/components/badge-schedule"
 import { BadgeColdChain } from "@/components/badge-coldchain"
@@ -17,18 +17,26 @@ interface ProductPageProps {
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
-  const { slug } = await params
-  const product = await getProductBySlug(slug)
-  
-  if (!product) {
-    return {
-      title: "Product Not Found",
+  try {
+    const { slug } = await params
+    const product = await getProductBySlug(slug)
+    
+    if (!product) {
+      return {
+        title: "Product Not Found",
+      }
     }
-  }
 
-  return {
-    title: `${product.brand_name} - Niti Pharma`,
-    description: `${product.brand_name} by ${getManufacturer(product)}. ${product.therapeutic_class} - ${getStrength(product)}`,
+    return {
+      title: `${product.brand_name} - Niti Pharma`,
+      description: `${product.brand_name} by ${getManufacturer(product)}. ${product.therapeutic_class} - ${getStrength(product)}`,
+    }
+  } catch (error) {
+    console.error("Error generating metadata:", error)
+    return {
+      title: "Product - Niti Pharma",
+      description: "Product information",
+    }
   }
 }
 
@@ -61,13 +69,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div>
           <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-muted mb-4">
             {product.images && product.images.length > 0 && product.images[0] ? (
-              <Image
+              <ProductImage
                 src={product.images[0]}
-                alt={product.brand_name}
-                fill
+                alt={product.brand_name || "Product image"}
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
-                unoptimized
               />
             ) : (
               <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -91,8 +97,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <AvailabilityPill inStock={product.in_stock} />
             </div>
             <div className="text-sm text-muted-foreground mb-4 sm:mb-6">
-              <p className="font-medium">{getStrength(product)}</p>
-              <p>{product.pack_size}</p>
+              <p className="font-medium">{getStrength(product) || "N/A"}</p>
+              <p>{product.pack_size || "N/A"}</p>
             </div>
           </div>
 
@@ -131,12 +137,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
                     <TableRow>
                       <TableCell className="font-medium">Active Ingredients</TableCell>
                       <TableCell>
-                        {product.actives.map((active, idx) => (
-                          <span key={idx}>
-                            {active.inn} {active.mg}mg{product.dosage_form === "syrup" ? "/5ml" : ""}
-                            {idx < product.actives.length - 1 ? " + " : ""}
-                          </span>
-                        ))}
+                        {product.actives && product.actives.length > 0 ? (
+                          product.actives.map((active, idx) => (
+                            <span key={idx}>
+                              {active.inn} {active.mg}mg{product.dosage_form === "syrup" ? "/5ml" : ""}
+                              {idx < product.actives.length - 1 ? " + " : ""}
+                            </span>
+                          ))
+                        ) : (
+                          "N/A"
+                        )}
                       </TableCell>
                     </TableRow>
                     <TableRow>
