@@ -17,13 +17,20 @@ export function ProductCard({ product }: ProductCardProps) {
       <Card className="h-full transition-all hover:shadow-lg hover:scale-[1.02]">
         <CardHeader className="p-0">
           <div className="relative aspect-square w-full overflow-hidden rounded-t-2xl bg-muted">
-            <Image
-              src={product.images[0] || "/api/placeholder/400/400"}
-              alt={product.brand_name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
+            {product.images && product.images.length > 0 && product.images[0] ? (
+              <Image
+                src={product.images[0]}
+                alt={product.brand_name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                unoptimized
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground text-xs">
+                <span>No Image</span>
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent className="p-4 space-y-2">

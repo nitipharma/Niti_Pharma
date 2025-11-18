@@ -33,15 +33,20 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { slug } = await params
-  const product = await getProductBySlug(slug)
+  try {
+    const { slug } = await params
+    const product = await getProductBySlug(slug)
 
-  if (!product) {
-    notFound()
-  }
+    if (!product) {
+      notFound()
+    }
 
-  const substitutes = await getProductsByIds(product.substitutes)
-  const docs = await getProductDocs(product.id)
+    // Safely get substitutes and docs
+    const substitutes = product.substitutes && product.substitutes.length > 0
+      ? await getProductsByIds(product.substitutes).catch(() => [])
+      : []
+    
+    const docs = await getProductDocs(product.id).catch(() => null)
 
   return (
     <div className="container py-4 sm:py-8 px-4 sm:px-6">
@@ -55,13 +60,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <div className="grid gap-6 sm:gap-8 lg:grid-cols-2">
         <div>
           <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-muted mb-4">
-            <Image
-              src={product.images[0] || "/api/placeholder/400/400"}
-              alt={product.brand_name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
+            {product.images && product.images.length > 0 && product.images[0] ? (
+              <Image
+                src={product.images[0]}
+                alt={product.brand_name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                unoptimized
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                <span>No Image Available</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -195,7 +207,24 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </div>
       )}
     </div>
-  )
+    )
+  } catch (error) {
+    console.error("Error loading product page:", error)
+    // Return a user-friendly error page
+    return (
+      <div className="container py-4 sm:py-8 px-4 sm:px-6">
+        <div className="text-center py-12">
+          <h1 className="text-2xl font-bold mb-4">Error Loading Product</h1>
+          <p className="text-muted-foreground mb-4">
+            An error occurred while loading the product. Please try again.
+          </p>
+          <Link href="/catalog">
+            <Button>Back to Catalog</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
 }
 
 
