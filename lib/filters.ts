@@ -29,9 +29,32 @@ export function filterProducts(products: Product[], filters: Filters): Product[]
         const cleaned = word.replace(/[^a-z0-9]/g, '')
         if (cleaned.length < 2) return []
         
-        // Try to split on capital letters or numbers
+        const words: string[] = []
+        
+        // Try to split on capital letters or numbers (for camelCase)
         const parts = cleaned.split(/(?=[A-Z])|(?=\d)/).filter(p => p.length >= 2)
-        return parts.length > 0 ? parts : [cleaned]
+        if (parts.length > 0) {
+          words.push(...parts)
+        } else {
+          words.push(cleaned)
+        }
+        
+        // Also extract common pharmaceutical words from concatenated strings
+        // Check if the word contains common drug name patterns (3+ chars)
+        const commonPatterns = ['calpol', 'paracetamol', 'tablet', 'mg', 'ml', 'syrup', 'capsule']
+        for (const pattern of commonPatterns) {
+          if (cleaned.includes(pattern) && pattern.length >= 3) {
+            words.push(pattern)
+          }
+        }
+        
+        // Extract numbers separately (e.g., "500" from "mg500" or "500mg")
+        const numbers = cleaned.match(/\d+/g)
+        if (numbers) {
+          words.push(...numbers.filter(n => n.length >= 2))
+        }
+        
+        return words
       })
       .filter(word => word.length >= 2)
       // Remove duplicates
@@ -61,15 +84,39 @@ export function filterProducts(products: Product[], filters: Filters): Product[]
       const wordMatches = (text: string, word: string): boolean => {
         // Direct match
         if (text.includes(word)) return true
+        
         // Check if word is part of a concatenated string (e.g., "mgcalpol" contains "calpol")
         // Split text into potential words and check
         const textWords = text.split(/[\s\-_]+/)
-        return textWords.some(tw => tw.includes(word) || word.includes(tw))
+        for (const tw of textWords) {
+          // Check if search word is contained in text word or vice versa
+          if (tw.includes(word) || word.includes(tw)) {
+            // Make sure the match is meaningful (at least 3 chars or exact match)
+            if (word.length >= 3 || tw === word) {
+              return true
+            }
+          }
+        }
+        return false
       }
       
       // Check if any significant word matches in brand name (highest priority)
-      const brandMatches = searchWords.filter(word => wordMatches(brandLower, word))
+      // Prioritize longer words (brand names) over short words (numbers)
+      const brandMatches = searchWords
+        .filter(word => word.length >= 3) // Focus on brand names, not just numbers
+        .filter(word => wordMatches(brandLower, word))
+      
+      // Check if number matches (e.g., "500" in "500mg")
+      const numberMatches = searchWords
+        .filter(word => /^\d+$/.test(word)) // Only numbers
+        .filter(word => brandLower.includes(word))
+      
+      // Match if we have brand name matches (highest priority)
       if (brandMatches.length > 0) return true
+      
+      // Also match if we have number matches in brand name
+      // This handles cases like "Calpol 500mg" matching "500"
+      if (numberMatches.length > 0) return true
       
       // Check if words match across different fields
       const matches = searchWords.filter(word => 
