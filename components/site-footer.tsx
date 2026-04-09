@@ -2,7 +2,7 @@ import Link from "next/link"
 
 export function SiteFooter() {
   return (
-    <footer className="border-t bg-background">
+    <footer className="border-t bg-background print:hidden">
       <div className="container py-8 sm:py-10 md:py-12 px-4 sm:px-6">
         <div className="grid gap-6 sm:gap-8 sm:grid-cols-2 md:grid-cols-4">
           <div className="space-y-3 sm:col-span-2 md:col-span-1">
