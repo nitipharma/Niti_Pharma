@@ -25,6 +25,7 @@ const platformNavItems = [
   { href: "/exceptions", label: "Exceptions" },
   { href: "/reconciliation", label: "Reconciliation" },
   { href: "/reports", label: "Reports" },
+  { href: "/billing", label: "Billing" },
   { href: "/customers", label: "Customers" },
 ]
 

@@ -12,20 +12,21 @@ import {
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CustomerBillingTab } from "@/components/platform/customer-billing-tab"
-import type { CustomerBillingInvoice, Document, Order } from "@/types/platform"
+import type { Document, Order } from "@/types/platform"
 
 type Props = {
+  customerId: string
   orders: Order[]
   docs: Document[]
   excCount: number
-  billing: {
-    outstanding: CustomerBillingInvoice[]
-    paid: CustomerBillingInvoice[]
-    totalOutstanding: number
-  }
 }
 
-export function CustomerDetailTabs({ orders, docs, excCount, billing }: Props) {
+export function CustomerDetailTabs({
+  customerId,
+  orders,
+  docs,
+  excCount,
+}: Props) {
   return (
     <Tabs defaultValue="overview" className="w-full">
       <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
@@ -106,11 +107,7 @@ export function CustomerDetailTabs({ orders, docs, excCount, billing }: Props) {
         </Card>
       </TabsContent>
       <TabsContent value="billing" className="mt-4">
-        <CustomerBillingTab
-          outstanding={billing.outstanding}
-          paid={billing.paid}
-          totalOutstanding={billing.totalOutstanding}
-        />
+        <CustomerBillingTab customerId={customerId} />
       </TabsContent>
     </Tabs>
   )

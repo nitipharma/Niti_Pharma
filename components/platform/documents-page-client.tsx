@@ -33,11 +33,16 @@ export function DocumentsPageClient() {
 
   return (
     <div className="container max-w-7xl space-y-6 px-4 py-8 sm:px-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">AI document processing</h1>
-        <p className="text-sm text-muted-foreground">
-          Simulated extraction and validation pipeline for invoices, POs, and delivery records.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">AI document processing</h1>
+          <p className="text-sm text-muted-foreground">
+            OCR + Claude extraction for invoices, POs, and delivery records.
+          </p>
+        </div>
+        <Button type="button" size="sm" asChild>
+          <Link href="/documents/upload">Upload document</Link>
+        </Button>
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="w-full">

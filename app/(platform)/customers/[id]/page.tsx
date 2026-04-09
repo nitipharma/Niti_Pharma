@@ -2,7 +2,6 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import {
   getCustomerById,
-  getCustomerBilling,
   getCustomerMetrics,
   getDocumentsForCustomer,
   getExceptionsForCustomer,
@@ -24,8 +23,6 @@ export default async function CustomerDetailPage({
   const orders = getOrdersForCustomer(customer.id, 20)
   const docs = getDocumentsForCustomer(customer.id).slice(0, 15)
   const excs = getExceptionsForCustomer(customer.id)
-  const billing = getCustomerBilling(customer.id)
-
   return (
     <div className="container max-w-5xl space-y-8 px-4 py-8 sm:px-6">
       <Link
@@ -68,10 +65,10 @@ export default async function CustomerDetailPage({
       </div>
 
       <CustomerDetailTabs
+        customerId={customer.id}
         orders={orders}
         docs={docs}
         excCount={excs.length}
-        billing={billing}
       />
     </div>
   )

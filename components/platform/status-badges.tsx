@@ -1,15 +1,29 @@
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import type { DocumentStatus, OrderStatus, ExceptionStatus } from "@/types/platform"
+import type { DocumentStatus, ExceptionStatus } from "@/types/platform"
 
-const orderTone: Record<
-  OrderStatus,
-  "success" | "warning" | "danger" | "info"
-> = {
-  Delivered: "success",
-  "In Transit": "warning",
-  Processing: "info",
-  Exception: "danger",
+function getOrderTone(status: string): "success" | "warning" | "danger" | "info" {
+  const s = status.toLowerCase()
+  if (s === "delivered") return "success"
+  if (s === "exception") return "danger"
+  if (s === "delayed") return "danger"
+  if (s === "processing") return "info"
+  if (s === "dispatched" || s === "in_transit" || s === "out_for_delivery")
+    return "warning"
+  return "info"
+}
+
+function formatOrderStatus(status: string): string {
+  const map: Record<string, string> = {
+    processing: "Processing",
+    dispatched: "Dispatched",
+    in_transit: "In Transit",
+    out_for_delivery: "Out for Delivery",
+    delivered: "Delivered",
+    delayed: "Delayed",
+    exception: "Exception",
+  }
+  return map[status.toLowerCase()] ?? status
 }
 
 const docTone: Record<
@@ -42,11 +56,11 @@ const toneClass: Record<
   info: "border-sky-500/30 bg-sky-500/10 text-sky-900 dark:text-sky-100",
 }
 
-export function OrderStatusBadge({ status }: { status: OrderStatus }) {
-  const t = orderTone[status]
+export function OrderStatusBadge({ status }: { status: string }) {
+  const t = getOrderTone(status)
   return (
     <Badge variant="outline" className={cn("font-normal", toneClass[t])}>
-      {status}
+      {formatOrderStatus(status)}
     </Badge>
   )
 }
@@ -83,11 +97,12 @@ export function ShipmentStatusBadge({
   status: string
 }) {
   const t =
-    status === "Delivered"
+    status.toLowerCase() === "delivered"
       ? "success"
-      : status === "Delayed"
+      : status.toLowerCase() === "delayed"
         ? "danger"
-        : status === "In Transit" || status === "Out for Delivery"
+        : status.toLowerCase() === "in transit" ||
+            status.toLowerCase() === "out for delivery"
           ? "warning"
           : "info"
   return (

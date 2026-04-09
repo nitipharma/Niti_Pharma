@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { demoDelay } from "@/lib/demo-fetch"
 
 export function useDemoFetch<T>(url: string): {
   data: T | null
@@ -17,7 +16,6 @@ export function useDemoFetch<T>(url: string): {
     async function run() {
       setLoading(true)
       setError(null)
-      await demoDelay()
       try {
         const res = await fetch(url)
         if (!res.ok) {

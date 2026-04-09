@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { downloadTextFile, exportReconciliationCsv } from "@/lib/csv-export"
-import type { Order, ReconciliationRecord } from "@/types/platform"
+import type { ReconciliationRecord } from "@/types/platform"
 import { Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/components/ui/use-toast"
 import {
   PieChart,
   Pie,
@@ -30,30 +31,41 @@ function MatchIcon({ ok }: { ok: boolean }) {
 
 const DONUT_COLORS = ["#10b981", "#f59e0b", "#64748b"]
 
+type RecPayload = {
+  records: ReconciliationRecord[]
+  aggregate: {
+    clean: number
+    needs_review: number
+    pending: number
+    total: number
+  }
+}
+
+type Me = { isAdmin: boolean }
+
 export function ReconciliationPageClient() {
+  const { toast } = useToast()
   const searchParams = useSearchParams()
   const highlight = searchParams.get("highlight")
 
-  const { data: rows, loading: loadingR, error: errR } =
-    useDemoFetch<ReconciliationRecord[]>("/api/reconciliation")
-  const { data: monthOrders, loading: loadingO, error: errO } = useDemoFetch<
-    Order[]
-  >("/api/orders?dateRange=30&sort=date&sortDir=desc")
+  const { data: recPayload, loading: loadingR, error: errR } =
+    useDemoFetch<RecPayload>("/api/reconciliation")
+  const { data: me } = useDemoFetch<Me>("/api/me")
 
-  const loading = loadingR || loadingO
-  const error = errR || errO
+  const loading = loadingR
+  const error = errR
+
+  const rows = recPayload?.records
 
   const summary = useMemo(() => {
-    if (!rows || !monthOrders) return null
-    const ids = new Set(monthOrders.map((o) => o.id))
-    const subset = rows.filter((r) => ids.has(r.orderId))
+    if (!recPayload) return null
     return {
-      total: subset.length,
-      clean: subset.filter((r) => r.status === "Clean").length,
-      pending: subset.filter((r) => r.status === "Pending").length,
-      needsReview: subset.filter((r) => r.status === "Needs Review").length,
+      total: recPayload.aggregate.total,
+      clean: recPayload.aggregate.clean,
+      pending: recPayload.aggregate.pending,
+      needsReview: recPayload.aggregate.needs_review,
     }
-  }, [rows, monthOrders])
+  }, [recPayload])
 
   const pieData = useMemo(() => {
     if (!summary) return []
@@ -87,7 +99,7 @@ export function ReconciliationPageClient() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Reconciliation</h1>
           <p className="text-sm text-muted-foreground">
-            Three-way match across PO, invoice, and delivery records (simulated).
+            Three-way match across PO, invoice, and delivery records.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -116,6 +128,33 @@ export function ReconciliationPageClient() {
           >
             Export CSV
           </Button>
+          {me?.isAdmin && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={async () => {
+                const res = await fetch("/api/reconciliation/run", {
+                  method: "POST",
+                })
+                const json = await res.json().catch(() => ({}))
+                if (!res.ok) {
+                  toast({
+                    variant: "destructive",
+                    title: "Run failed",
+                  })
+                  return
+                }
+                toast({
+                  title: "Reconciliation complete",
+                  description: `Processed ${String(json.processed)} orders.`,
+                })
+                window.location.reload()
+              }}
+            >
+              Run reconciliation
+            </Button>
+          )}
         </div>
       </div>
 
@@ -135,9 +174,7 @@ export function ReconciliationPageClient() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
-                Orders this month (30d)
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">Total records</CardTitle>
             </CardHeader>
             <CardContent className="text-2xl font-bold">{summary.total}</CardContent>
           </Card>

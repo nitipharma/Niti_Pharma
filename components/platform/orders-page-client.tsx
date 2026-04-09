@@ -16,14 +16,24 @@ import {
 import { OrderStatusBadge } from "@/components/platform/status-badges"
 import { Skeleton } from "@/components/ui/skeleton"
 import { downloadTextFile, exportOrdersCsv } from "@/lib/csv-export"
-import type { Order, OrderStatus } from "@/types/platform"
-import { ChevronLeft, ChevronRight, Download } from "lucide-react"
+import type { SerializedOrder } from "@/lib/serializers/order"
+import { ChevronLeft, ChevronRight, Download, Plus, Upload } from "lucide-react"
 
 const PAGE_SIZE = 20
 
+type OrderFilterStatus =
+  | "all"
+  | "processing"
+  | "dispatched"
+  | "in_transit"
+  | "out_for_delivery"
+  | "delivered"
+  | "delayed"
+  | "exception"
+
 function buildOrdersUrl(params: {
   search: string
-  status: OrderStatus | "all"
+  status: OrderFilterStatus
   dateRange: "7" | "30" | "90" | "all"
   sort: "date" | "amount" | "status"
   sortDir: "asc" | "desc"
@@ -39,7 +49,7 @@ function buildOrdersUrl(params: {
 
 export function OrdersPageClient() {
   const [search, setSearch] = useState("")
-  const [status, setStatus] = useState<OrderStatus | "all">("all")
+  const [status, setStatus] = useState<OrderFilterStatus>("all")
   const [dateRange, setDateRange] = useState<"7" | "30" | "90" | "all">("30")
   const [sort, setSort] = useState<"date" | "amount" | "status">("date")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
@@ -50,7 +60,7 @@ export function OrdersPageClient() {
     [search, status, dateRange, sort, sortDir]
   )
 
-  const { data, loading, error } = useDemoFetch<Order[]>(url)
+  const { data, loading, error } = useDemoFetch<SerializedOrder[]>(url)
 
   const totalPages = data ? Math.max(1, Math.ceil(data.length / PAGE_SIZE)) : 1
   const pageRows = useMemo(() => {
@@ -71,21 +81,35 @@ export function OrdersPageClient() {
     <div className="container max-w-7xl space-y-6 px-4 py-8 sm:px-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Order intake</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
           <p className="text-sm text-muted-foreground">
-            Search and filter simulated wholesale orders.
+            Search and filter your wholesale orders.
           </p>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onExport}
-          disabled={!data?.length}
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Export CSV
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="default" size="sm" asChild>
+            <Link href="/orders/new">
+              <Plus className="mr-2 h-4 w-4" />
+              New order
+            </Link>
+          </Button>
+          <Button type="button" variant="secondary" size="sm" asChild>
+            <Link href="/orders/upload">
+              <Upload className="mr-2 h-4 w-4" />
+              Upload PO
+            </Link>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onExport}
+            disabled={!data?.length}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -104,7 +128,7 @@ export function OrdersPageClient() {
           <Select
             value={status}
             onValueChange={(v) => {
-              setStatus(v as OrderStatus | "all")
+              setStatus(v as OrderFilterStatus)
               setPage(1)
             }}
           >
@@ -113,10 +137,13 @@ export function OrdersPageClient() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="Processing">Processing</SelectItem>
-              <SelectItem value="In Transit">In Transit</SelectItem>
-              <SelectItem value="Delivered">Delivered</SelectItem>
-              <SelectItem value="Exception">Exception</SelectItem>
+              <SelectItem value="processing">Processing</SelectItem>
+              <SelectItem value="dispatched">Dispatched</SelectItem>
+              <SelectItem value="in_transit">In transit</SelectItem>
+              <SelectItem value="out_for_delivery">Out for delivery</SelectItem>
+              <SelectItem value="delivered">Delivered</SelectItem>
+              <SelectItem value="delayed">Delayed</SelectItem>
+              <SelectItem value="exception">Exception</SelectItem>
             </SelectContent>
           </Select>
           <Select

@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Mirrors Supabase auth user id (UUID string)
+model User {
+  id         String   @id
+  email      String   @unique
+  role       String   @default("customer") // admin | customer
+  customerId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  customer Customer? @relation(fields: [customerId], references: [id])
+  orders   Order[]
+}
+
+model Customer {
+  id              String   @id @default(cuid())
+  name            String
+  email           String?
+  phone           String?
+  address         String?  @db.Text
+  deliveryAddress String?  @map("delivery_address") @db.Text
+  region          String?
+  city            String?
+  state           String?
+  accountStatus   String?  @default("active")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  users   User[]
+  orders  Order[]
+  invoices Invoice[]
+}
+
+model Order {
+  id               String   @id
+  userId           String
+  customerId       String
+  status           String   @default("processing")
+  deliveryAddress  String   @db.Text
+  requiredDate     DateTime
+  priority         String   @default("standard") // standard | urgent | scheduled
+  notes            String?  @db.Text
+  totalAmount      Float
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  creator        User            @relation(fields: [userId], references: [id])
+  customer       Customer        @relation(fields: [customerId], references: [id])
+  lineItems      OrderLineItem[]
+  documents      Document[]
+  shipments      Shipment[]
+  exceptions     Exception[]
+  invoices       Invoice[]
+  reconciliation ReconciliationRecord?
+}
+
+model OrderLineItem {
+  id          String @id @default(cuid())
+  orderId     String
+  productSku  String
+  productName String
+  quantity    Int
+  unitPrice   Float
+  lineTotal   Float
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id             String    @id @default(cuid())
+  userId         String
+  r2Key          String
+  type           String // invoice | purchase_order | delivery_record
+  vendorName     String?
+  linkedOrderId  String?
+  status         String    @default("uploaded")
+  rawText        String?   @db.Text
+  extractedData  Json?
+  confidence     Float?
+  uploadedAt     DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  order      Order?      @relation(fields: [linkedOrderId], references: [id])
+  exceptions Exception[]
+  invoices   Invoice[]
+}
+
+model Exception {
+  id               String    @id @default(cuid())
+  orderId          String
+  documentId       String?
+  type             String // short_ship | overcharge | invoice_mismatch | damaged_goods | duplicate_invoice
+  description      String?   @db.Text
+  amountDelta      Float     @default(0)
+  status           String    @default("open") // open | under_review | resolved | escalated
+  resolutionNotes  String?   @db.Text
+  resolvedAt       DateTime?
+  resolvedBy       String?
+  dateFlagged      DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  order    Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  document Document? @relation(fields: [documentId], references: [id])
+}
+
+model ReconciliationRecord {
+  id              String   @id @default(cuid())
+  orderId         String   @unique
+  poMatch         Boolean  @default(false)
+  invoiceMatch    Boolean  @default(false)
+  deliveryMatch   Boolean  @default(false)
+  status          String   @default("pending") // clean | needs_review | pending
+  updatedAt       DateTime @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Shipment {
+  id                 String    @id @default(cuid())
+  orderId            String    @unique
+  carrier            String
+  status             String    @default("dispatched")
+  dispatchedAt       DateTime?
+  estimatedDelivery  DateTime?
+  deliveredAt        DateTime?
+  waypoints          Json      @default("[]")
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id             String    @id @default(cuid())
+  orderId        String
+  customerId     String
+  amount         Float
+  dueDate        DateTime
+  paidAt         DateTime?
+  status         String    @default("outstanding") // outstanding | paid | overdue | disputed
+  documentId     String?
+  reminderSentAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  order    Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customer Customer  @relation(fields: [customerId], references: [id])
+  document Document? @relation(fields: [documentId], references: [id])
+}

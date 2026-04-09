@@ -1,13 +1,32 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { Document } from "@/types/platform"
 import { Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/components/ui/use-toast"
 
-export function DocumentDetailClient({ doc }: { doc: Document }) {
+function confidenceLabel(c: number): string {
+  const pct = c <= 1 ? c * 100 : c
+  return `${pct.toFixed(0)}%`
+}
+
+function DocumentDetailInner({
+  doc,
+  onRefresh,
+}: {
+  doc: Document
+  onRefresh: () => Promise<void>
+}) {
+  const { toast } = useToast()
+  const [linkOrderId, setLinkOrderId] = useState("")
+  const [linking, setLinking] = useState(false)
+
   const fieldRows = useMemo(
     () => [
       { key: "vendor", label: "Vendor", value: doc.extractedFields.vendor },
@@ -46,16 +65,54 @@ export function DocumentDetailClient({ doc }: { doc: Document }) {
     return () => window.clearInterval(id)
   }, [doc.id, fieldRows.length, lineRows.length])
 
+  const onLinkOrder = async () => {
+    const oid = linkOrderId.trim()
+    if (!oid) return
+    setLinking(true)
+    try {
+      const res = await fetch(`/api/documents/${encodeURIComponent(doc.id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ linkedOrderId: oid }),
+      })
+      if (!res.ok) {
+        toast({
+          variant: "destructive",
+          title: "Could not link order",
+        })
+        return
+      }
+      toast({ title: "Order linked", description: "Validation re-run." })
+      setLinkOrderId("")
+      await onRefresh()
+    } finally {
+      setLinking(false)
+    }
+  }
+
+  const validatedBanner =
+    doc.status === "Validated" && doc.matchedOrderId
+  const mismatch = doc.status === "Mismatch"
+
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle className="text-base">Source document</CardTitle>
-          <p className="text-xs text-amber-800 dark:text-amber-200">
-            Simulated document — for illustration
+          <p className="text-xs text-muted-foreground">
+            {doc.vendorOrCustomer} · uploaded record
           </p>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
+          <Button variant="outline" size="sm" asChild>
+            <a
+              href={`/api/documents/${encodeURIComponent(doc.id)}/file`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View original
+            </a>
+          </Button>
           <div className="rounded-lg border bg-card p-4 shadow-sm">
             <p className="text-xs font-medium text-muted-foreground">
               {doc.simulatedContent.vendorName}
@@ -100,7 +157,7 @@ export function DocumentDetailClient({ doc }: { doc: Document }) {
         <CardHeader>
           <CardTitle className="text-base">AI extracted fields</CardTitle>
           <p className="text-xs text-muted-foreground">
-            Extracted by document parser
+            Extracted via OCR + Claude claude-sonnet-4-20250514
           </p>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -145,6 +202,9 @@ export function DocumentDetailClient({ doc }: { doc: Document }) {
               </div>
             )
           })}
+          <p className="pt-2 text-xs text-muted-foreground">
+            Model confidence: {confidenceLabel(doc.confidence)}
+          </p>
         </CardContent>
       </Card>
 
@@ -153,6 +213,42 @@ export function DocumentDetailClient({ doc }: { doc: Document }) {
           <CardTitle className="text-base">Validation result</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {!doc.matchedOrderId ? (
+            <div className="space-y-2 rounded-md border border-dashed p-3 text-sm">
+              <p className="text-muted-foreground">
+                Link to an order to validate line items against the purchase
+                record.
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input
+                  placeholder="Order ID (e.g. ORD-…)"
+                  value={linkOrderId}
+                  onChange={(e) => setLinkOrderId(e.target.value)}
+                />
+                <Button
+                  type="button"
+                  disabled={linking}
+                  onClick={() => void onLinkOrder()}
+                >
+                  {linking ? "Linking…" : "Link & validate"}
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          {validatedBanner && (
+            <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-900 dark:text-emerald-100">
+              FULLY VALIDATED — matches order {doc.matchedOrderId}
+            </div>
+          )}
+
+          {mismatch && (
+            <p className="text-sm text-amber-900 dark:text-amber-100">
+              Mismatch detected — compare ordered vs extracted quantities and
+              prices below.
+            </p>
+          )}
+
           <div className="flex flex-wrap items-center gap-2">
             <Badge
               variant="outline"
@@ -165,7 +261,7 @@ export function DocumentDetailClient({ doc }: { doc: Document }) {
               {doc.validation.overall}
             </Badge>
             <span className="text-sm text-muted-foreground">
-              Confidence: {doc.confidence}%
+              Score: {confidenceLabel(doc.confidence)}
             </span>
           </div>
           <div className="overflow-x-auto">
@@ -205,4 +301,53 @@ export function DocumentDetailClient({ doc }: { doc: Document }) {
       </Card>
     </div>
   )
+}
+
+export function DocumentDetailClient({ documentId }: { documentId: string }) {
+  const [doc, setDoc] = useState<Document | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch(
+        `/api/documents/${encodeURIComponent(documentId)}`
+      )
+      if (res.status === 404) {
+        setError("Document not found.")
+        setDoc(null)
+        return
+      }
+      if (!res.ok) throw new Error("load")
+      const json = (await res.json()) as Document
+      setDoc(json)
+    } catch {
+      setError("Could not load document.")
+      setDoc(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [documentId])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  if (loading) {
+    return (
+      <div className="grid gap-4 lg:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-64 w-full" />
+        ))}
+      </div>
+    )
+  }
+
+  if (error || !doc) {
+    return <p className="text-destructive">{error ?? "Not found"}</p>
+  }
+
+  return <DocumentDetailInner doc={doc} onRefresh={load} />
 }

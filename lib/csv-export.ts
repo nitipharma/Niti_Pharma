@@ -1,7 +1,15 @@
-import type { Order } from "@/types/platform"
 import type { ReconciliationRecord } from "@/types/platform"
 
-export function exportOrdersCsv(orders: Order[]): string {
+export type OrderCsvRow = {
+  id: string
+  customerName: string
+  placedAt: string
+  status: string
+  productCategory: string
+  totalAmount: number
+}
+
+export function exportOrdersCsv(orders: OrderCsvRow[]): string {
   const headers = [
     "Order ID",
     "Customer",

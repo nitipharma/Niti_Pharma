@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useMemo, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import { useDemoFetch } from "@/hooks/use-demo-fetch"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,17 +18,26 @@ import type { Shipment } from "@/types/platform"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-function buildUrl(filter: "all" | "in_transit" | "delayed") {
+function buildUrl(filter: "all" | "in_transit" | "delayed", refresh: number) {
   const qs = new URLSearchParams()
   if (filter !== "all") qs.set("filter", filter)
-  return `/api/shipments${qs.toString() ? `?${qs}` : ""}`
+  qs.set("_refresh", String(refresh))
+  return `/api/shipments?${qs.toString()}`
 }
 
 export function TrackingPageClient() {
   const [filter, setFilter] = useState<"all" | "in_transit" | "delayed">("all")
   const [openId, setOpenId] = useState<string | null>(null)
+  const [tick, setTick] = useState(0)
 
-  const url = useMemo(() => buildUrl(filter), [filter])
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setTick((t) => t + 1)
+    }, 30_000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  const url = useMemo(() => buildUrl(filter, tick), [filter, tick])
   const { data, loading, error } = useDemoFetch<Shipment[]>(url)
 
   return (
@@ -37,7 +46,7 @@ export function TrackingPageClient() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Delivery tracking</h1>
           <p className="text-sm text-muted-foreground">
-            Simulated carrier milestones — not live GPS.
+            Carrier milestones refresh every 30 seconds.
           </p>
         </div>
         <Select
@@ -86,7 +95,7 @@ export function TrackingPageClient() {
                 </thead>
                 <tbody>
                   {data?.map((s) => {
-                    const delayed = s.status === "Delayed"
+                    const delayed = s.status.toLowerCase() === "delayed"
                     const expanded = openId === s.id
                     return (
                       <Fragment key={s.id}>
@@ -136,7 +145,7 @@ export function TrackingPageClient() {
                           <tr className="bg-muted/20">
                             <td colSpan={8} className="px-4 py-4">
                               <p className="mb-3 text-xs font-medium text-muted-foreground">
-                                Simulated route checkpoints
+                                Route checkpoints
                               </p>
                               <ol className="relative space-y-3 border-l border-border pl-6">
                                 {s.waypoints.map((w, i) => (
