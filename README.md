@@ -1,224 +1,138 @@
-# Niti Pharma - Pharmacy Distributor Demo Website
+# Niti Pharma
 
-A modern, polished demo website for a B2B pharmacy distributor showcasing product catalog, coverage information, and compliance details. Built with Next.js 14, TypeScript, and Tailwind CSS for optimal performance and user experience.
+A **demonstration** web application for a B2B pharmaceutical distributor. It combines a **public marketing site** (catalog, coverage, compliance, contact) with a **signed-in platform workspace** for orders, shipments, documents, exceptions, reconciliation, billing, and reporting.
 
-> **Note**: This is a demo/portfolio project showcasing modern web development practices.
+> **Scope:** Portfolio and product-demo quality. Platform data is simulated for illustration unless you connect your own database and services.
 
-## 📋 Table of Contents
+---
 
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-- [Project Structure](#project-structure)
-- [Key Features Explained](#key-features-explained)
-- [Data](#data)
-- [Styling](#styling)
-- [Accessibility](#accessibility)
-- [Performance](#performance)
-- [Deployment](#deployment)
-- [Demo Notes](#demo-notes)
+## What’s included
 
-## ✨ Features
+| Area | Description |
+|------|-------------|
+| **Marketing site** | Landing page, searchable product catalog (static JSON), coverage map, compliance content, and contact form. |
+| **Platform workspace** | Dashboard, orders, tracking, document upload with OCR/AI extraction, exception handling, three-way reconciliation, reports, billing, and customer views. |
+| **Backend** | Next.js Route Handlers, **PostgreSQL** via **Prisma**, optional **Supabase Auth**, file storage on **Cloudflare R2**, email via **Resend**, and optional **Anthropic** for document extraction. |
 
-- **Product Catalog**: Browse 30+ pharmaceutical products with advanced search, filtering, and sorting
-- **Product Details**: Comprehensive product information pages with attributes, documentation links, and substitutes
-- **Coverage Map**: Interactive coverage visualization and detailed state/city service information
-- **Compliance Information**: DSCSA compliance details, licensing, returns/recalls, and 340B program support
-- **Contact Form**: Validated contact form with console logging (demo mode)
-- **Dark Mode**: Full dark mode support with system preference detection
-- **Responsive Design**: Mobile-first, fully responsive across all devices
-- **Accessibility**: WCAG compliant with keyboard navigation and screen reader support
-- **Performance**: Optimized for fast load times and smooth interactions
+---
 
-## 🛠️ Tech Stack
+## Tech stack
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **UI Components**: shadcn/ui (Radix UI primitives)
-- **Icons**: Lucide React
-- **Animations**: Framer Motion
-- **Forms**: React Hook Form + Zod validation
-- **Tables**: TanStack Table (client-side)
-- **Theme**: next-themes
-- **State Management**: React hooks + localStorage
+- **Framework:** Next.js 14 (App Router), React 18, TypeScript  
+- **UI:** Tailwind CSS, Radix UI / shadcn-style components, Framer Motion, Lucide icons  
+- **Data:** Prisma ORM, PostgreSQL  
+- **Auth:** Supabase (middleware refreshes session when `NEXT_PUBLIC_SUPABASE_*` is set)  
+- **Forms:** React Hook Form + Zod  
+- **Tables & charts:** TanStack Table, Recharts  
 
-## 🚀 Getting Started
+---
 
-### Prerequisites
+## Prerequisites
 
-- Node.js 18+ 
-- npm, yarn, or pnpm
+- **Node.js 18+**
+- **npm**, **pnpm**, or **yarn**
+- **PostgreSQL** (for platform APIs and Prisma; marketing pages can load without a DB if you only browse static routes)
 
-### Installation
+---
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd web_portfolio
+## Local setup
+
+1. **Clone and install**
+
+   ```bash
+   git clone <repository-url>
+   cd Niti_Pharma
+   npm install
+   ```
+
+2. **Environment variables**
+
+   Create a `.env` file in the project root. Use the following as a checklist; omit keys you do not need for the slice you are running.
+
+   | Variable | Purpose |
+   |----------|---------|
+   | `DATABASE_URL` | PostgreSQL connection string for Prisma |
+   | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL (auth/session) |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
+   | `CLOUDFLARE_R2_ACCOUNT_ID`, `CLOUDFLARE_R2_ACCESS_KEY_ID`, `CLOUDFLARE_R2_SECRET_ACCESS_KEY`, `CLOUDFLARE_R2_BUCKET_NAME` | Document uploads to R2 |
+   | `RESEND_API_KEY` | Contact form and invoice reminder email |
+   | `RESEND_FROM` | Verified sender address for Resend |
+   | `ANTHROPIC_API_KEY` | AI-assisted extraction in the document pipeline |
+   | `NEXT_PUBLIC_COMPANY_NAME` | Optional; defaults in billing emails |
+
+   If Supabase variables are missing, middleware skips Supabase setup and the app still runs for local static browsing.
+
+3. **Database**
+
+   ```bash
+   npx prisma migrate dev
+   # or, for a quick local schema push:
+   npm run db:push
+   ```
+
+4. **Run**
+
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Development server |
+| `npm run build` / `npm start` | Production build and start |
+| `npm run lint` | ESLint |
+| `npm run db:migrate` | Prisma migrate (development) |
+| `npm run db:push` | Push schema without migrations |
+| `npm run db:generate` | Regenerate Prisma Client |
+| `npm run generate:platform-data` | Regenerate platform-related data (see `scripts/`) |
+
+---
+
+## Project layout (high level)
+
+```
+app/
+  (platform)/          # Workspace: dashboard, orders, documents, etc.
+  api/                 # REST-style Route Handlers
+  catalog/             # Public catalog
+  compliance/, coverage/, contact/
+components/            # Shared UI and feature components
+data/                  # Static JSON (e.g. products, coverage)
+lib/                   # Data helpers, Prisma, R2, pipelines, etc.
+prisma/                # schema.prisma and migrations
+public/                # Static assets, PWA service worker
 ```
 
-2. Install dependencies:
-```bash
-npm install
-# or
-yarn install
-# or
-pnpm install
-```
+Platform navigation and feature descriptions are centralized in `lib/platform-nav.ts`.
 
-3. Run the development server:
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
+---
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+## Deployment
 
-### Build for Production
+Deploy like any Next.js app (for example **Vercel**). Set the same environment variables in the hosting provider. Ensure `DATABASE_URL` points to a production PostgreSQL instance and run migrations against it before going live.
 
-```bash
-npm run build
-npm start
-```
+---
 
-## 📁 Project Structure
+## Demo limitations
 
-```
-├── app/                    # Next.js App Router pages
-│   ├── catalog/           # Product catalog page
-│   ├── product/[slug]/    # Product detail pages
-│   ├── coverage/          # Coverage map and table
-│   ├── compliance/        # Compliance information
-│   ├── contact/           # Contact form page
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Landing page
-├── components/            # React components
-│   ├── ui/               # shadcn/ui components
-│   ├── site-header.tsx   # Site navigation header
-│   ├── site-footer.tsx   # Site footer
-│   ├── hero.tsx          # Landing page hero
-│   ├── product-card.tsx  # Product card component
-│   └── ...               # Other components
-├── data/                 # Static JSON data
-│   ├── products.json     # Product catalog (30 items)
-│   ├── coverage.json     # Coverage data
-│   └── docs.json         # Product documentation links
-├── lib/                  # Utility functions
-│   ├── data.ts          # Data access helpers
-│   ├── filters.ts       # Filtering and sorting logic
-│   ├── storage.ts       # localStorage utilities
-│   └── utils.ts         # General utilities
-└── public/              # Static assets
-```
+- The workspace banner states that **data is simulated** for demonstration unless you supply real integrations.
+- **No production ERP guarantee:** flows are designed to showcase UX and architecture, not to replace licensed pharmacy software without review.
+- **Contact email** requires `RESEND_API_KEY` (and a verified domain/sender) to deliver; otherwise the API responds with an error you can see in server logs.
 
-## 🔍 Key Features Explained
+---
 
-### Catalog Page
+## License
 
-- **Search**: Real-time search across product name, NDC, and manufacturer
-- **Filters**: 
-  - Manufacturer (multi-select)
-  - Category/Therapeutic class
-  - Schedule (OTC/Rx/Schedule H)
-  - Cold-chain requirement
-  - Stock availability
-- **Sorting**: Relevance, Name, Price, Availability
-- **View Modes**: Toggle between grid and table views (persisted in localStorage)
+This repository is intended as a **demo / portfolio** project. Add a license file if you redistribute or commercialize it.
 
-### Product Detail Page
+---
 
-- Complete product information
-- Schedule and cold-chain badges
-- Stock availability indicator
-- Product attributes table
-- Documentation links (SDS, Label)
-- Eligible substitutes section
+## Contributing
 
-### Coverage Page
-
-- Simplified SVG map representation
-- Detailed coverage table with states, cities, and service days
-- Responsive design
-
-### Compliance Page
-
-- DSCSA overview (TI/TS/TH)
-- Returns and recalls information
-- Licensing and certifications
-- 340B program support details
-
-### Contact Form
-
-- Full form validation with Zod
-- Required fields: Name, Email, Phone, Pharmacy Name, City, State, Message
-- Optional: GSTIN
-- Console logging on submit (demo mode)
-- Success toast notification
-
-## 📊 Data
-
-All data is stored in static JSON files in the `/data` directory:
-
-- `products.json`: 30 synthetic pharmaceutical products
-- `coverage.json`: 15 states with cities and service days
-- `docs.json`: Product documentation URLs (placeholder links)
-
-## 🎨 Styling
-
-The project uses Tailwind CSS with custom design tokens:
-
-- **Colors**: Slate/stone backgrounds, emerald accent
-- **Typography**: Inter font (system fallback)
-- **Components**: Rounded-2xl, soft shadows, hover states
-- **Dark Mode**: Full support with CSS variables
-
-## ♿ Accessibility
-
-- Semantic HTML
-- ARIA labels for icons and interactive elements
-- Keyboard navigation support
-- Focus visible indicators
-- Screen reader friendly
-- Reduced motion support
-
-## ⚡ Performance
-
-- Client-side filtering and search (instant results)
-- Image optimization with Next.js Image component
-- Code splitting with Next.js App Router
-- Optimized bundle size
-
-## 🚢 Deployment
-
-This project is ready to deploy on Vercel:
-
-1. Push your code to GitHub
-2. Import the project in Vercel
-3. Deploy automatically
-
-The project can also be deployed to other platforms that support Next.js (Netlify, AWS Amplify, etc.). Simply run `npm run build` to create a production build.
-
-## 📝 Demo Notes
-
-- **No Backend**: All data is static JSON files
-- **No Authentication**: No user accounts or login
-- **No Payments**: No cart, checkout, or payment processing
-- **No ERP Integration**: Purely read-only browsing
-- **Contact Form**: Logs to console only (no actual submission)
-
-## 📄 License
-
-This is a demo project for portfolio purposes.
-
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome! Feel free to check the issues page.
-
-## 📧 Support
-
-For questions or issues, please open an issue on the repository.
-
+Issues and pull requests are welcome. Please keep changes focused and consistent with existing patterns in the codebase.
