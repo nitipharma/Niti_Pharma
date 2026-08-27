@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -11,20 +11,26 @@ import { DiagnosticsProvider } from "@/components/diagnostics-provider"
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
 export const metadata: Metadata = {
-  title: "Niti Pharma",
-  description: "Trusted B2B pharmaceutical distributor serving pharmacies nationwide with comprehensive product catalog, reliable delivery, and full compliance.",
+  title: {
+    default: "Niti Pharma — B2B Pharmaceutical Distribution",
+    template: "%s · Niti Pharma",
+  },
+  description: "Licensed B2B pharmaceutical distributor serving pharmacies across India — 30,000+ SKUs, cold-chain logistics, batch-level traceability, and dependable delivery.",
   openGraph: {
-    title: "Niti Pharma",
-    description: "Trusted B2B pharmaceutical distributor serving pharmacies nationwide.",
+    title: "Niti Pharma — B2B Pharmaceutical Distribution",
+    description: "Licensed B2B pharmaceutical distributor serving pharmacies across India.",
     type: "website",
   },
   manifest: "/manifest.webmanifest",
-  themeColor: "#0f172a",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Niti Pharma",
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: "#0a5c50",
 }
 
 export default function RootLayout({

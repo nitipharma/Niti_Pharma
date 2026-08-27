@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { Breadcrumb } from "@/components/breadcrumb"
+import { PageHeader } from "@/components/page-header"
 import { SearchBar } from "@/components/search-bar"
 import { FiltersPanel } from "@/components/filters-panel"
 import { CatalogGrid } from "@/components/catalog-grid"
@@ -244,13 +245,12 @@ export default function CatalogPage() {
   return (
     <div className="container py-4 sm:py-8 px-4 sm:px-6">
       <Breadcrumb items={[{ label: "Catalog" }]} />
-      <div className="mb-4 sm:mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Product Catalog</h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">
-            Browse our comprehensive pharmaceutical catalog
-          </p>
-        </div>
+      <PageHeader
+        eyebrow="Catalog"
+        title="Product catalog"
+        description="Search 30,000+ SKUs by brand, composition, or manufacturer — or match products straight from a label photo."
+        className="mb-4 sm:mb-6"
+        actions={
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -294,7 +294,8 @@ export default function CatalogPage() {
             </Button>
           </div>
         </div>
-      </div>
+        }
+      />
 
       <div className="mb-4 sm:mb-6">
         <SearchBar value={filters.search} onChange={handleSearchChange} />

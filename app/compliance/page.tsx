@@ -1,6 +1,7 @@
 "use client"
 
 import { Breadcrumb } from "@/components/breadcrumb"
+import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AlertTriangle, FileText, Thermometer, ShieldCheck, AlertCircle } from "lucide-react"
@@ -41,15 +42,11 @@ export default function CompliancePage() {
     <div className="container py-4 sm:py-8 px-4 sm:px-6">
       <Breadcrumb items={[{ label: "Compliance" }]} />
 
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3 sm:mb-4">
-          Compliance & Quality
-        </h1>
-        <p className="text-sm sm:text-lg text-muted-foreground">
-          We maintain the highest standards of compliance, quality, and regulatory adherence in all
-          our operations.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Compliance"
+        title="Quality you can audit"
+        description="Traceability, cold-chain integrity, and licensing — the standards behind every shipment we send, documented and open for review."
+      />
 
       {/* Three Main Cards */}
       <div className="grid gap-4 sm:gap-6 md:grid-cols-3 mb-8 sm:mb-12">

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card"
 
 export const metadata = {
-  title: "Platform workspace | Niti Pharma",
+  title: "Platform workspace",
   description:
     "Overview of the distributor demo: orders, documents, tracking, and billing.",
 }

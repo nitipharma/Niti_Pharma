@@ -76,6 +76,13 @@ const config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "calc(var(--radius) + 4px)",
+        "2xl": "calc(var(--radius) + 8px)",
+      },
+      boxShadow: {
+        soft: "0 1px 2px hsl(180 30% 10% / 0.05), 0 4px 12px hsl(180 30% 10% / 0.05)",
+        lifted:
+          "0 2px 4px hsl(180 30% 10% / 0.05), 0 12px 32px -8px hsl(180 30% 10% / 0.16)",
       },
       keyframes: {
         "accordion-down": {

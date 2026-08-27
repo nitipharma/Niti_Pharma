@@ -28,13 +28,13 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     }
 
     return {
-      title: `${product.brand_name} - Niti Pharma`,
+      title: product.brand_name,
       description: `${product.brand_name} by ${getManufacturer(product)}. ${product.therapeutic_class} - ${getStrength(product)}`,
     }
   } catch (error) {
     console.error("Error generating metadata:", error)
     return {
-      title: "Product - Niti Pharma",
+      title: "Product",
       description: "Product information",
     }
   }

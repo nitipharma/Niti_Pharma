@@ -13,10 +13,10 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   return (
-    <Link href={`/product/${product.slug}`}>
-      <Card className="h-full transition-all hover:shadow-lg hover:scale-[1.02]">
+    <Link href={`/product/${product.slug}`} className="group block h-full">
+      <Card className="h-full overflow-hidden shadow-soft transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/30 group-hover:shadow-lifted">
         <CardHeader className="p-0">
-          <div className="relative aspect-square w-full overflow-hidden rounded-t-2xl bg-muted">
+          <div className="relative aspect-square w-full overflow-hidden bg-muted">
             {product.images && product.images.length > 0 && product.images[0] ? (
               <Image
                 src={product.images[0]}
@@ -35,7 +35,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </CardHeader>
         <CardContent className="p-4 space-y-2">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold text-sm line-clamp-2 flex-1">
+            <h3 className="flex-1 text-sm font-semibold line-clamp-2 transition-colors group-hover:text-primary">
               {product.brand_name}
             </h3>
             <BadgeSchedule schedule={product.schedule} />

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from "react"
 import { Breadcrumb } from "@/components/breadcrumb"
+import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
@@ -73,15 +74,11 @@ export default function CoveragePage() {
     <div className="container py-4 sm:py-8 px-4 sm:px-6">
       <Breadcrumb items={[{ label: "Coverage" }]} />
 
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3 sm:mb-4">
-          Service Coverage
-        </h1>
-        <p className="text-sm sm:text-lg text-muted-foreground">
-          We provide reliable pharmaceutical distribution services across India with fast delivery
-          times and comprehensive coverage.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Coverage"
+        title="Where we deliver"
+        description="Reliable pharmaceutical distribution across India, with scheduled service days and dependable delivery windows for every region we serve."
+      />
 
       {/* Search */}
       <div className="mb-6">

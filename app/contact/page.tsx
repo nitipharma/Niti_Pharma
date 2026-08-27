@@ -1,11 +1,12 @@
 import { Breadcrumb } from "@/components/breadcrumb"
+import { PageHeader } from "@/components/page-header"
 import { ContactForm } from "@/components/contact-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Mail, Phone, MapPin } from "lucide-react"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Contact - Niti Pharma",
+  title: "Contact",
   description: "Get in touch with our sales team for pharmaceutical distribution inquiries.",
 }
 
@@ -14,13 +15,11 @@ export default function ContactPage() {
     <div className="container py-4 sm:py-8 px-4 sm:px-6">
       <Breadcrumb items={[{ label: "Contact" }]} />
       
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-3 sm:mb-4">Contact Sales</h1>
-        <p className="text-sm sm:text-lg text-muted-foreground">
-          Have questions? We&apos;re here to help. Reach out to our sales team for
-          pricing, product information, or partnership opportunities.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Contact"
+        title="Talk to our sales team"
+        description="Questions about pricing, products, or partnership? Reach out and we'll get back to you within one business day."
+      />
 
       <div className="grid gap-6 sm:gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
@@ -82,7 +81,7 @@ export default function ContactPage() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Monday - Saturday</span>
                   <span className="font-medium">9:00 AM - 6:00 PM</span>
-                </div>image.png
+                </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Sunday</span>
                   <span className="font-medium">10:00 AM - 3:00 PM</span>
