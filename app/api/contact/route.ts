@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
 
+/** Escape user input before embedding it in the HTML email body. */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -46,6 +56,17 @@ This email was sent from the Niti Pharma contact form.
     // Initialize Resend only when needed (at runtime, not build time)
     const resend = new Resend(process.env.RESEND_API_KEY)
 
+    const safe = {
+      name: escapeHtml(String(name)),
+      email: escapeHtml(String(email)),
+      phone: escapeHtml(String(phone)),
+      pharmacyName: escapeHtml(String(pharmacyName)),
+      city: escapeHtml(String(city)),
+      state: escapeHtml(String(state)),
+      gstin: gstin ? escapeHtml(String(gstin)) : "",
+      message: escapeHtml(String(message)),
+    }
+
     const { data, error } = await resend.emails.send({
       from: "Niti Pharma Contact Form <onboarding@resend.dev>",
       to: ["nitipharma04@gmail.com"],
@@ -54,45 +75,45 @@ This email was sent from the Niti Pharma contact form.
       text: emailContent,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #059669;">New Contact Form Submission</h2>
+          <h2 style="color: #0a5c50;">New Contact Form Submission</h2>
           <p>You have received a new contact form submission from the Niti Pharma website.</p>
           
           <h3 style="color: #333; margin-top: 20px;">Contact Details:</h3>
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
               <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Name:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${name}</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${safe.name}</td>
             </tr>
             <tr>
               <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Email:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;"><a href="mailto:${email}">${email}</a></td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;"><a href="mailto:${safe.email}">${safe.email}</a></td>
             </tr>
             <tr>
               <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Phone:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;"><a href="tel:${phone}">${phone}</a></td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;"><a href="tel:${safe.phone}">${safe.phone}</a></td>
             </tr>
             <tr>
               <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Pharmacy Name:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${pharmacyName}</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${safe.pharmacyName}</td>
             </tr>
             <tr>
               <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">City:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${city}</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${safe.city}</td>
             </tr>
             <tr>
               <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">State:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${state}</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${safe.state}</td>
             </tr>
-            ${gstin ? `
+            ${safe.gstin ? `
             <tr>
               <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">GSTIN:</td>
-              <td style="padding: 8px; border-bottom: 1px solid #eee;">${gstin}</td>
+              <td style="padding: 8px; border-bottom: 1px solid #eee;">${safe.gstin}</td>
             </tr>
             ` : ""}
           </table>
           
           <h3 style="color: #333; margin-top: 20px;">Message:</h3>
-          <p style="background: #f5f5f5; padding: 15px; border-radius: 5px; white-space: pre-wrap;">${message}</p>
+          <p style="background: #f5f5f5; padding: 15px; border-radius: 5px; white-space: pre-wrap;">${safe.message}</p>
           
           <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
           <p style="color: #666; font-size: 12px;">This email was sent from the Niti Pharma contact form.</p>

@@ -99,7 +99,7 @@ export default function CoveragePage() {
       <div className="mb-8 sm:mb-12">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg sm:text-xl">Coverage Map</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Covered states</CardTitle>
           </CardHeader>
           <CardContent>
             <CoverageMap

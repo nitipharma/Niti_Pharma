@@ -8,7 +8,12 @@ import { AvailabilityPill } from "@/components/availability-pill"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { getProductBySlug, getProductsByIds, getProductDocs, getManufacturer, getStrength, getFormDisplay } from "@/lib/data"
+import { getManufacturer, getStrength, getFormDisplay } from "@/lib/data"
+import {
+  getProductBySlugServer as getProductBySlug,
+  getProductsByIdsServer as getProductsByIds,
+  getProductDocsServer as getProductDocs,
+} from "@/lib/data-server"
 import { FileText, ExternalLink } from "lucide-react"
 import type { Metadata } from "next"
 
@@ -41,20 +46,38 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
+  const { slug } = await params
+
+  let product
   try {
-    const { slug } = await params
-    const product = await getProductBySlug(slug)
+    product = await getProductBySlug(slug)
+  } catch (error) {
+    console.error("Error loading product page:", error)
+    return (
+      <div className="container py-4 sm:py-8 px-4 sm:px-6">
+        <div className="text-center py-12">
+          <h1 className="text-2xl font-bold mb-4">Error Loading Product</h1>
+          <p className="text-muted-foreground mb-4">
+            An error occurred while loading the product. Please try again.
+          </p>
+          <Link href="/catalog">
+            <Button>Back to Catalog</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
-    if (!product) {
-      notFound()
-    }
+  // Outside the try so the NEXT_NOT_FOUND throw isn't swallowed by the catch
+  if (!product) {
+    notFound()
+  }
 
-    // Safely get substitutes and docs
-    const substitutes = product.substitutes && product.substitutes.length > 0
-      ? await getProductsByIds(product.substitutes).catch(() => [])
-      : []
-    
-    const docs = await getProductDocs(product.id).catch(() => null)
+  const substitutes = product.substitutes && product.substitutes.length > 0
+    ? await getProductsByIds(product.substitutes).catch(() => [])
+    : []
+
+  const docs = await getProductDocs(product.id).catch(() => null)
 
   return (
     <div className="container py-4 sm:py-8 px-4 sm:px-6">
@@ -190,7 +213,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Eligible Substitutes</h2>
           <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {substitutes.map((sub) => (
-              <Card key={sub.id} className="hover:shadow-lg transition-shadow">
+              <Card key={sub.id} className="shadow-soft transition-shadow hover:border-primary/30 hover:shadow-lifted">
                 <CardHeader>
                   <Link
                     href={`/product/${sub.slug}`}
@@ -217,24 +240,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </div>
       )}
     </div>
-    )
-  } catch (error) {
-    console.error("Error loading product page:", error)
-    // Return a user-friendly error page
-    return (
-      <div className="container py-4 sm:py-8 px-4 sm:px-6">
-        <div className="text-center py-12">
-          <h1 className="text-2xl font-bold mb-4">Error Loading Product</h1>
-          <p className="text-muted-foreground mb-4">
-            An error occurred while loading the product. Please try again.
-          </p>
-          <Link href="/catalog">
-            <Button>Back to Catalog</Button>
-          </Link>
-        </div>
-      </div>
-    )
-  }
+  )
 }
 
 

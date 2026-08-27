@@ -8,8 +8,12 @@ interface AvailabilityPillProps {
 export function AvailabilityPill({ inStock }: AvailabilityPillProps) {
   return (
     <Badge
-      variant={inStock ? "default" : "secondary"}
-      className="text-xs"
+      variant="outline"
+      className={
+        inStock
+          ? "border-primary/25 bg-accent text-accent-foreground text-xs"
+          : "border-border bg-muted text-muted-foreground text-xs"
+      }
     >
       {inStock ? (
         <>
