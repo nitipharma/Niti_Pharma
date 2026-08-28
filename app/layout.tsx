@@ -7,10 +7,12 @@ import { SiteFooter } from "@/components/site-footer"
 import { Toaster } from "@/components/ui/toaster"
 import { ServiceWorkerRegister } from "@/components/service-worker-register"
 import { DiagnosticsProvider } from "@/components/diagnostics-provider"
+import { getSiteUrl } from "@/lib/site"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "Niti Pharma — B2B Pharmaceutical Distribution",
     template: "%s · Niti Pharma",

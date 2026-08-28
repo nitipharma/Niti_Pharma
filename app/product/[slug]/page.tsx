@@ -10,10 +10,17 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { getManufacturer, getStrength, getFormDisplay } from "@/lib/data"
 import {
+  getAllProductsServer,
   getProductBySlugServer as getProductBySlug,
   getProductsByIdsServer as getProductsByIds,
   getProductDocsServer as getProductDocs,
 } from "@/lib/data-server"
+
+/** Pre-render every product page at build time (fully static on Vercel). */
+export async function generateStaticParams() {
+  const products = await getAllProductsServer()
+  return products.map((product) => ({ slug: product.slug }))
+}
 import { FileText, ExternalLink } from "lucide-react"
 import type { Metadata } from "next"
 

@@ -6,6 +6,8 @@
 export interface EmbeddingMetadata {
   dim: number
   count: number
+  /** Regeneration timestamp, used to cache-bust the binary fetch */
+  version?: number
   ids: string[]
 }
 
@@ -33,15 +35,19 @@ async function loadEmbeddings(): Promise<void> {
 
   loadingPromise = (async () => {
     try {
-      // Load metadata
-      const metaResponse = await fetch("/data/product_embeddings.meta.json")
+      // Load metadata (no-cache so a regenerated index is picked up)
+      const metaResponse = await fetch("/data/product_embeddings.meta.json", {
+        cache: "no-cache",
+      })
       if (!metaResponse.ok) {
         throw new Error(`Failed to load metadata: ${metaResponse.statusText}`)
       }
       metadata = (await metaResponse.json()) as EmbeddingMetadata
 
-      // Load binary embeddings
-      const binResponse = await fetch("/data/product_embeddings.bin")
+      // Load binary embeddings, versioned by the metadata stamp
+      const binResponse = await fetch(
+        `/data/product_embeddings.bin?v=${metadata.version ?? metadata.count}`
+      )
       if (!binResponse.ok) {
         throw new Error(`Failed to load embeddings: ${binResponse.statusText}`)
       }

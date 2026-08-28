@@ -23,6 +23,7 @@ import {
 import { Grid3x3, Table as TableIcon, Filter, X, Camera } from "lucide-react"
 import { getAllProducts, getUniqueManufacturers, getUniqueCategories, getProductsByIds } from "@/lib/data"
 import { filterProducts, type Filters } from "@/lib/filters"
+import { prepareSemanticSearch, semanticSearch, type EmbeddingBackend } from "@/lib/semantic-search"
 import { getStorageItem, setStorageItem } from "@/lib/storage"
 import { type Product } from "@/lib/data"
 import { type ParsedLabel } from "@/lib/parse-label"
@@ -51,6 +52,61 @@ export default function CatalogPage() {
     inStock: null,
     sort: "relevance",
   })
+
+  // On-device AI search (WebGPU with WASM fallback)
+  const [aiMode, setAiMode] = useState(false)
+  const [aiBackend, setAiBackend] = useState<EmbeddingBackend | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiResults, setAiResults] = useState<Product[] | null>(null)
+  const [aiError, setAiError] = useState(false)
+
+  useEffect(() => {
+    if (!aiMode) {
+      setAiResults(null)
+      setAiError(false)
+      return
+    }
+
+    let cancelled = false
+    const query = filters.search.trim()
+
+    const run = async () => {
+      try {
+        setAiError(false)
+        if (!aiBackend) {
+          setAiLoading(true)
+          const backend = await prepareSemanticSearch()
+          if (cancelled) return
+          setAiBackend(backend)
+        }
+        if (!query) {
+          if (!cancelled) {
+            setAiResults(null)
+            setAiLoading(false)
+          }
+          return
+        }
+        setAiLoading(true)
+        const results = await semanticSearch(query, products)
+        if (!cancelled) {
+          setAiResults(results.map((r) => r.product))
+          setAiLoading(false)
+        }
+      } catch (error) {
+        console.error("AI search failed:", error)
+        if (!cancelled) {
+          setAiError(true)
+          setAiResults(null)
+          setAiLoading(false)
+        }
+      }
+    }
+
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [aiMode, filters.search, products, aiBackend])
 
   useEffect(() => {
     let cancelled = false
@@ -92,10 +148,28 @@ export default function CatalogPage() {
     [products]
   )
 
-  const filteredProducts = useMemo(
-    () => filterProducts(products, filters),
-    [products, filters]
-  )
+  const aiActive = aiMode && filters.search.trim().length > 0 && aiResults !== null
+
+  const filteredProducts = useMemo(() => {
+    if (aiActive && aiResults) {
+      // Semantic ranking replaces keyword search; facet filters still apply
+      // and "relevance" sort preserves the similarity order.
+      return filterProducts(aiResults, { ...filters, search: "", sort: "relevance" })
+    }
+    return filterProducts(products, filters)
+  }, [products, filters, aiActive, aiResults])
+
+  const aiStatus = !aiMode
+    ? null
+    : aiError
+    ? "AI search unavailable — using keyword search instead."
+    : aiLoading && !aiBackend
+    ? "Loading the on-device model (first use only)..."
+    : aiLoading
+    ? "Ranking products by meaning..."
+    : aiBackend
+    ? `Ranking by meaning — runs in your browser via ${aiBackend === "webgpu" ? "WebGPU" : "WebAssembly"}, no data leaves your device.`
+    : null
 
   const handleSearchChange = (search: string) => {
     setFilters((prev) => ({ ...prev, search }))
@@ -298,7 +372,13 @@ export default function CatalogPage() {
       />
 
       <div className="mb-4 sm:mb-6">
-        <SearchBar value={filters.search} onChange={handleSearchChange} />
+        <SearchBar
+          value={filters.search}
+          onChange={handleSearchChange}
+          aiMode={aiMode}
+          onAiModeChange={setAiMode}
+          aiStatus={aiStatus}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-4">

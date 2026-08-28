@@ -25,6 +25,17 @@ const nextConfig = {
         ],
       },
       {
+        // Catalog data + precomputed embeddings: cache for an hour, serve
+        // stale while revalidating so repeat visits stay instant
+        source: '/data/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
         source: '/manifest.webmanifest',
         headers: [
           {

@@ -82,13 +82,18 @@ export function filterProducts(products: Product[], filters: Filters): Product[]
       
       // Helper function to check if word matches (handles concatenated words)
       const wordMatches = (text: string, word: string): boolean => {
+        if (!text || !word) return false
+
         // Direct match
         if (text.includes(word)) return true
-        
+
         // Check if word is part of a concatenated string (e.g., "mgcalpol" contains "calpol")
         // Split text into potential words and check
         const textWords = text.split(/[\s\-_]+/)
         for (const tw of textWords) {
+          // Empty fragments match everything via includes("") — skip them,
+          // and require meaningful length on both sides
+          if (tw.length < 2) continue
           // Check if search word is contained in text word or vice versa
           if (tw.includes(word) || word.includes(tw)) {
             // Make sure the match is meaningful (at least 3 chars or exact match)
