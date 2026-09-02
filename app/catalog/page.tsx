@@ -34,9 +34,13 @@ export default function CatalogPage() {
   const { toast } = useToast()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<"grid" | "table">(
-    getStorageItem("catalog-view-mode", "grid")
-  )
+  // Start with the default and read localStorage after mount — reading it
+  // during the initial render causes a hydration mismatch with the
+  // server-rendered markup
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid")
+  useEffect(() => {
+    setViewMode(getStorageItem("catalog-view-mode", "grid"))
+  }, [])
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
   const [ocrDialogOpen, setOcrDialogOpen] = useState(false)
   const [confirmSheetOpen, setConfirmSheetOpen] = useState(false)

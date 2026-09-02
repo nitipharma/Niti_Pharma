@@ -95,61 +95,32 @@ export async function decodeBarcode(
 }
 
 /**
- * Normalize barcode to GTIN format (remove leading zeros, ensure 13 digits)
+ * Normalize a barcode to canonical GTIN-14 form.
+ * Per GS1, GTIN-8/12/13 are stored right-aligned and zero-padded to 14
+ * digits, so padding both sides makes comparison exact.
  */
 export function normalizeGTIN(barcode: string): string {
-  // Remove any non-digit characters
   const digits = barcode.replace(/\D/g, "")
-
-  // EAN-13/UPC-A: 13 digits (UPC-A has leading 0)
-  // EAN-8: 8 digits
-  // UPC-E: 8 digits (can be expanded to UPC-A)
-
-  // If it's 12 digits (UPC-A without check digit or with leading 0), pad to 13
-  if (digits.length === 12) {
-    return "0" + digits
-  }
-
-  // If it's 8 digits (EAN-8 or UPC-E), we can't directly convert to EAN-13
-  // Return as-is for now
-  if (digits.length === 8) {
+  if (digits.length === 0 || digits.length > 14) {
     return digits
   }
-
-  // Return 13-digit format
-  return digits.length >= 13 ? digits.slice(0, 13) : digits
+  return digits.padStart(14, "0")
 }
 
 /**
- * Find product by GTIN
+ * Find product by GTIN using canonical GTIN-14 comparison.
+ * No substring fallback: a partial match could return the wrong product,
+ * which is unacceptable for pharmaceutical identification.
  */
 export async function findProductByGTIN(
   gtin: string,
   products: Array<{ gtin: string; id: string }>
 ): Promise<{ id: string; gtin: string } | null> {
   const normalized = normalizeGTIN(gtin)
-
-  // Try exact match first
-  let product = products.find((p) => p.gtin === normalized || p.gtin === gtin)
-  if (product) {
-    return product
+  if (normalized.length !== 14) {
+    return null
   }
 
-  // Try matching last 12 digits (UPC-A format)
-  if (normalized.length === 13) {
-    const upcA = normalized.slice(1) // Remove leading 0
-    product = products.find((p) => p.gtin.endsWith(upcA) || p.gtin === upcA)
-    if (product) {
-      return product
-    }
-  }
-
-  // Try matching any substring
-  product = products.find((p) => p.gtin.includes(normalized) || normalized.includes(p.gtin))
-  if (product) {
-    return product
-  }
-
-  return null
+  return products.find((p) => normalizeGTIN(p.gtin) === normalized) || null
 }
 

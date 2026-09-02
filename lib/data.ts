@@ -1,105 +1,41 @@
 import { type Product, validateProducts } from "@/types/product"
 
-// Lazy load JSON data using fetch to avoid build issues
-let productsData: any = null
-let innSynonymsData: any = null
-let coverageData: any = null
-let docsData: any = null
+// JSON data served from /public/data. On the server we read the files from
+// disk (relative fetch URLs are not supported in Node); in the browser we
+// fetch them over HTTP so the service worker can cache them for offline use.
+async function loadJson<T>(file: string): Promise<T> {
+  if (typeof window === "undefined") {
+    const { promises: fs } = await import("fs")
+    const { join } = await import("path")
+    const raw = await fs.readFile(join(process.cwd(), "public", "data", file), "utf-8")
+    return JSON.parse(raw.replace(/^﻿/, "")) as T
+  }
 
-async function loadProductsData() {
-  if (!productsData) {
-    // Add timeout to prevent hanging
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
-    
-    try {
-      // Always use cache-busting to bypass service worker cache
-      const cacheBuster = `?v=${Date.now()}`
-      const response = await fetch(`/data/products.json${cacheBuster}`, {
-        signal: controller.signal,
-        cache: 'no-store', // Bypass all caches
-        headers: {
-          'Cache-Control': 'no-cache',
-        },
-      })
-      
-      clearTimeout(timeoutId)
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}. Make sure the dev server is running at http://localhost:3000`)
-      }
-      
-      // Get response as text first to check for encoding issues
-      const textData = await response.text()
-      
-      // Remove BOM if present (UTF-8 BOM is EF BB BF)
-      let cleanText = textData.replace(/^\uFEFF/, '').trim()
-      
-      // Check if response looks like HTML (might be an error page)
-      if (cleanText.trim().startsWith('<!')) {
-        throw new Error('Received HTML instead of JSON. The server might be returning an error page.')
-      }
-      
-      let jsonData
-      try {
-        jsonData = JSON.parse(cleanText)
-      } catch (parseError) {
-        // Log more details about the parse error
-        const errorMsg = parseError instanceof Error ? parseError.message : 'Unknown error'
-        const preview = cleanText.substring(0, 500)
-        console.error('JSON parse error:', errorMsg)
-        console.error('Response preview (first 500 chars):', preview)
-        console.error('Response length:', cleanText.length)
-        console.error('Response starts with:', cleanText.substring(0, 50))
-        throw new Error(`Failed to parse JSON: ${errorMsg}. Response preview: ${preview.substring(0, 100)}`)
-      }
-      
-      // Validate it's an array
-      if (!Array.isArray(jsonData)) {
-        throw new Error('Products data is not an array')
-      }
-      
-      if (jsonData.length === 0) {
-        console.warn('Products data is empty')
-      }
-      
-      productsData = jsonData
-    } catch (error) {
-      clearTimeout(timeoutId)
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Request timeout: Products data took too long to load. The file might be very large or the server is slow.')
-      }
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        throw new Error('Network error: Unable to fetch products data. Make sure the dev server is running (npm run dev) and accessible at http://localhost:3000')
-      }
+  const response = await fetch(`/data/${file}`)
+  if (!response.ok) {
+    throw new Error(`Failed to load /data/${file}: HTTP ${response.status}`)
+  }
+  const text = await response.text()
+  const cleanText = text.replace(/^﻿/, "").trim()
+  if (cleanText.startsWith("<!")) {
+    throw new Error(`Received HTML instead of JSON for /data/${file}`)
+  }
+  return JSON.parse(cleanText) as T
+}
+
+// Deduplicate concurrent loads and cache results per file
+const jsonCache = new Map<string, Promise<unknown>>()
+
+function loadJsonCached<T>(file: string): Promise<T> {
+  let promise = jsonCache.get(file)
+  if (!promise) {
+    promise = loadJson<T>(file).catch((error) => {
+      jsonCache.delete(file) // allow retry after a failure
       throw error
-    }
+    })
+    jsonCache.set(file, promise)
   }
-  return productsData
-}
-
-async function loadInnSynonymsData() {
-  if (!innSynonymsData) {
-    const response = await fetch("/data/inn_synonyms.json")
-    innSynonymsData = await response.json()
-  }
-  return innSynonymsData
-}
-
-async function loadCoverageData() {
-  if (!coverageData) {
-    const response = await fetch("/data/coverage.json")
-    coverageData = await response.json()
-  }
-  return coverageData
-}
-
-async function loadDocsData() {
-  if (!docsData) {
-    const response = await fetch("/data/docs.json")
-    docsData = await response.json()
-  }
-  return docsData
+  return promise as Promise<T>
 }
 
 export type { Product } from "@/types/product"
@@ -118,29 +54,25 @@ export type ProductDocs = {
 export type INNSynonyms = Record<string, string>
 
 // Cache validated products
-let validatedProducts: Product[] | null = null
+let validatedProducts: Promise<Product[]> | null = null
 
-export async function getAllProducts(): Promise<Product[]> {
-  // Simulate network latency
-  await new Promise((resolve) => setTimeout(resolve, 100))
-  
-  if (validatedProducts === null) {
-    try {
-      const data = await loadProductsData()
-      validatedProducts = validateProducts(data)
-    } catch (error) {
-      console.error("Error loading products:", error)
-      // Provide more detailed error message
-      if (error instanceof Error) {
-        if (error.message.includes('validation')) {
-          throw new Error(`Product data validation failed: ${error.message}`)
+export function getAllProducts(): Promise<Product[]> {
+  if (!validatedProducts) {
+    validatedProducts = loadJsonCached<unknown>("products.json")
+      .then((data) => {
+        if (!Array.isArray(data)) {
+          throw new Error("Products data is not an array")
         }
-        throw new Error(`Failed to load products: ${error.message}`)
-      }
-      throw new Error('Failed to load products: Unknown error')
-    }
+        return validateProducts(data)
+      })
+      .catch((error) => {
+        validatedProducts = null // allow retry after a failure
+        console.error("Error loading products:", error)
+        throw error instanceof Error
+          ? new Error(`Failed to load products: ${error.message}`)
+          : new Error("Failed to load products: Unknown error")
+      })
   }
-  
   return validatedProducts
 }
 
@@ -155,13 +87,12 @@ export async function getProductsByIds(ids: string[]): Promise<Product[]> {
 }
 
 export async function getAllCoverage(): Promise<Coverage[]> {
-  const data = await loadCoverageData()
-  return data as Coverage[]
+  return loadJsonCached<Coverage[]>("coverage.json")
 }
 
 export async function getProductDocs(productId: string): Promise<ProductDocs | null> {
-  const data = await loadDocsData()
-  return (data as Record<string, ProductDocs>)[productId] || null
+  const data = await loadJsonCached<Record<string, ProductDocs>>("docs.json")
+  return data[productId] || null
 }
 
 export function getUniqueManufacturers(products: Product[]): string[] {
@@ -178,8 +109,7 @@ export function getUniqueCategories(products: Product[]): string[] {
 }
 
 export async function getSynonyms(): Promise<INNSynonyms> {
-  const data = await loadInnSynonymsData()
-  return data as INNSynonyms
+  return loadJsonCached<INNSynonyms>("inn_synonyms.json")
 }
 
 export async function getCanonicalINN(inn: string): Promise<string> {

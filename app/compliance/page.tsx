@@ -1,10 +1,15 @@
-"use client"
-
 import { Breadcrumb } from "@/components/breadcrumb"
 import { PageHeader } from "@/components/page-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AlertTriangle, FileText, Thermometer, ShieldCheck, AlertCircle } from "lucide-react"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Compliance - Niti Pharma",
+  description:
+    "Regulatory compliance, cold chain standards, and product recall information for Niti Pharma.",
+}
 
 // Static recalls data for demo
 const recalls = [
@@ -205,7 +210,11 @@ export default function CompliancePage() {
                       {recall.status}
                     </Badge>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(recall.date).toLocaleDateString()}
+                      {new Date(recall.date).toLocaleDateString("en-IN", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
                     </p>
                     <p className="text-xs text-muted-foreground font-mono">{recall.id}</p>
                   </div>

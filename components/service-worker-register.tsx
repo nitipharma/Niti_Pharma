@@ -24,8 +24,10 @@ export function ServiceWorkerRegister() {
                     newWorker.state === "installed" &&
                     navigator.serviceWorker.controller
                   ) {
-                    // New service worker available
-                    console.log("New service worker available")
+                    // New service worker installed; it takes over on the
+                    // next navigation. Never force-reload the page under
+                    // the user.
+                    console.log("New service worker available; will activate on next visit")
                   }
                 })
               }
@@ -34,15 +36,6 @@ export function ServiceWorkerRegister() {
           .catch((error) => {
             console.error("Service Worker registration failed:", error)
           })
-
-        // Listen for service worker updates
-        let refreshing = false
-        navigator.serviceWorker.addEventListener("controllerchange", () => {
-          if (!refreshing) {
-            refreshing = true
-            window.location.reload()
-          }
-        })
       } else {
         // In development, unregister any existing service workers
         navigator.serviceWorker.getRegistrations().then((registrations) => {

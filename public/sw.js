@@ -1,9 +1,9 @@
 // Service Worker for PWA caching
-const CACHE_NAME = "niti-pharma-v1"
-const DATA_CACHE_NAME = "niti-pharma-data-v1"
-const MODEL_CACHE_NAME = "niti-pharma-models-v1"
+const CACHE_NAME = "niti-pharma-v2"
+const DATA_CACHE_NAME = "niti-pharma-data-v2"
+const MODEL_CACHE_NAME = "niti-pharma-models-v2"
 
-// Cache-first resources (data files, models)
+// Cache-first resources (data files, models, immutable hashed assets)
 const CACHE_FIRST_PATTERNS = [
   /\/data\/.*\.json$/,
   /\/data\/.*\.bin$/,
@@ -13,14 +13,19 @@ const CACHE_FIRST_PATTERNS = [
   /.*wasm$/,
 ]
 
+// Content-hashed build assets never change under the same URL
+const IMMUTABLE_PATTERNS = [/\/_next\/static\/.*/]
+
 // Network-first resources (HTML, JS chunks)
 const NETWORK_FIRST_PATTERNS = [
-  /\/_next\/static\/.*/,
   /\/.*\.js$/,
   /\/.*\.css$/,
 ]
 
-// Install event - cache essential resources
+// Install event - cache essential resources.
+// No skipWaiting here: activating a new worker under a running page and
+// force-reloading it is hostile mid-session; the page opts in via the
+// SKIP_WAITING message instead.
 self.addEventListener("install", (event) => {
   console.log("[Service Worker] Installing...")
   event.waitUntil(
@@ -33,7 +38,6 @@ self.addEventListener("install", (event) => {
       ])
     })
   )
-  self.skipWaiting()
 })
 
 // Activate event - clean up old caches
@@ -81,14 +85,23 @@ self.addEventListener("fetch", (event) => {
     return
   }
 
+  // Cache-first for content-hashed build assets
+  if (IMMUTABLE_PATTERNS.some((pattern) => pattern.test(url.pathname))) {
+    event.respondWith(cacheFirst(request, CACHE_NAME))
+    return
+  }
+
   // Network-first for HTML and JS chunks
   if (NETWORK_FIRST_PATTERNS.some((pattern) => pattern.test(url.pathname))) {
     event.respondWith(networkFirst(request, CACHE_NAME))
     return
   }
 
-  // Default: network-first with cache fallback
-  event.respondWith(networkFirst(request, CACHE_NAME))
+  // Default: network-first, but only cache same-origin responses so
+  // arbitrary third-party traffic doesn't grow the cache without bound
+  if (url.origin === self.location.origin) {
+    event.respondWith(networkFirst(request, CACHE_NAME))
+  }
 })
 
 // Cache-first strategy with network fallback

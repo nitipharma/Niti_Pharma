@@ -41,7 +41,9 @@ export function normalizeToMg(value: number, unit: string): ParsedUnit {
       }
 
     case "mcg":
-    case "μg":
+    case "μg": // Greek mu
+    case "µg": // micro sign
+    case "ug":
     case "microgram":
     case "micrograms":
       return {
@@ -99,12 +101,14 @@ export function normalizeToMg(value: number, unit: string): ParsedUnit {
       }
 
     default:
-      // Unknown unit, assume mg as default
+      // Unknown unit: guessing mg in a pharmaceutical context is dangerous
+      // (e.g. "5 mmol" recorded as 5 mg), so report near-zero confidence
+      // and let callers discard the value
       return {
         value,
         unit: "mg",
         normalizedMg: value,
-        confidence: 0.5, // Lower confidence for unknown units
+        confidence: 0.1,
       }
   }
 }
@@ -114,10 +118,9 @@ export function normalizeToMg(value: number, unit: string): ParsedUnit {
  * Handles formats like "500mg", "500 mg", "500mg/5ml", etc.
  */
 export function parseStrength(text: string): ParsedUnit | null {
-  // Remove common prefixes/suffixes
-  const cleaned = text
-    .replace(/[^\d.\s%mgcgiu/]/gi, " ")
-    .trim()
+  // Normalize separators only — an aggressive character strip would destroy
+  // units like "ml" and "µg" and corrupt the parsed strength
+  const cleaned = text.replace(/[(),;:]/g, " ").trim()
 
   // Pattern: number followed by unit
   // Matches: "500mg", "500 mg", "500mg/5ml", "500 mg/5ml", "0.5g", "1000 IU", etc.
@@ -125,7 +128,7 @@ export function parseStrength(text: string): ParsedUnit | null {
     // mg/5ml format
     /(\d+\.?\d*)\s*(mg\s*\/\s*5\s*ml|mg\s*per\s*5\s*ml|mg\/5ml)/i,
     // Standard unit formats
-    /(\d+\.?\d*)\s*(mg|mcg|μg|g|gm|iu|i\.u\.|%|ml|milligram|microgram|gram|international\s+unit)/i,
+    /(\d+\.?\d*)\s*(mg|mcg|μg|µg|ug|g|gm|iu|i\.u\.|%|ml|milligram|microgram|gram|international\s+unit)/i,
     // Number only (assume mg)
     /(\d+\.?\d*)\s*$/,
   ]

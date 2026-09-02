@@ -1,125 +1,122 @@
 {
-  "1": {
-    "sdsUrl": "/docs/sds/paracetamol-500mg-tablets.pdf",
-    "labelUrl": "/docs/label/paracetamol-500mg-tablets.pdf"
+  "0baff327-5fb4-4b84-8661-b268151e6b9a": {
+    "sdsUrl": "/docs/sds/parafast-500-tab.pdf",
+    "labelUrl": "/docs/label/parafast-500-tab.pdf"
   },
-  "2": {
-    "sdsUrl": "/docs/sds/paracetamol-650mg-tablets.pdf",
-    "labelUrl": "/docs/label/paracetamol-650mg-tablets.pdf"
+  "f7a96576-e460-4a40-9efb-316d31f8ed72": {
+    "sdsUrl": "/docs/sds/parafast-650-tab.pdf",
+    "labelUrl": "/docs/label/parafast-650-tab.pdf"
   },
-  "3": {
-    "sdsUrl": "/docs/sds/paracetamol-syrup-125mg.pdf",
-    "labelUrl": "/docs/label/paracetamol-syrup-125mg.pdf"
+  "e87b676e-4d75-4285-a247-5286602fc53a": {
+    "sdsUrl": "/docs/sds/parafast-500-30-tab.pdf",
+    "labelUrl": "/docs/label/parafast-500-30-tab.pdf"
   },
-  "4": {
-    "sdsUrl": "/docs/sds/amoxicillin-250mg-capsules.pdf",
-    "labelUrl": "/docs/label/amoxicillin-250mg-capsules.pdf"
+  "fbb884c7-7b52-4002-9400-44fadac20cab": {
+    "sdsUrl": "/docs/sds/parafast-125-syr.pdf",
+    "labelUrl": "/docs/label/parafast-125-syr.pdf"
   },
-  "5": {
-    "sdsUrl": "/docs/sds/amoxicillin-500mg-capsules.pdf",
-    "labelUrl": "/docs/label/amoxicillin-500mg-capsules.pdf"
+  "18d4872c-b6ec-471a-9fc6-56f466cfbc3a": {
+    "sdsUrl": "/docs/sds/calpol-500-tab.pdf",
+    "labelUrl": "/docs/label/calpol-500-tab.pdf"
   },
-  "6": {
-    "sdsUrl": "/docs/sds/amoxicillin-clavulanate-625mg.pdf",
-    "labelUrl": "/docs/label/amoxicillin-clavulanate-625mg.pdf"
+  "bed1106e-d2cd-4bb8-9c85-5e5ec88f2d98": {
+    "sdsUrl": "/docs/sds/calpol-125-syr.pdf",
+    "labelUrl": "/docs/label/calpol-125-syr.pdf"
   },
-  "7": {
-    "sdsUrl": "/docs/sds/insulin-glargine-100iu.pdf",
-    "labelUrl": "/docs/label/insulin-glargine-100iu.pdf"
+  "14afbe94-b23b-40d6-8e8a-f5fb5e11459b": {
+    "sdsUrl": "/docs/sds/dolo-650-tab.pdf",
+    "labelUrl": "/docs/label/dolo-650-tab.pdf"
   },
-  "8": {
-    "sdsUrl": "/docs/sds/insulin-aspart-100iu.pdf",
-    "labelUrl": "/docs/label/insulin-aspart-100iu.pdf"
+  "41c7d9db-7ec3-409b-a9a3-6bdbde66a604": {
+    "sdsUrl": "/docs/sds/crocin-500-tab.pdf",
+    "labelUrl": "/docs/label/crocin-500-tab.pdf"
   },
-  "9": {
-    "sdsUrl": "/docs/sds/metformin-500mg-tablets.pdf",
-    "labelUrl": "/docs/label/metformin-500mg-tablets.pdf"
+  "b060aa51-ceb7-4ddb-a6d8-1c9a4ff025f6": {
+    "sdsUrl": "/docs/sds/brufen-400-tab.pdf",
+    "labelUrl": "/docs/label/brufen-400-tab.pdf"
   },
-  "10": {
-    "sdsUrl": "/docs/sds/metformin-1000mg-tablets.pdf",
-    "labelUrl": "/docs/label/metformin-1000mg-tablets.pdf"
+  "0b94e5b8-55f6-4dc4-b915-3f95791fbfae": {
+    "sdsUrl": "/docs/sds/brufen-600-tab.pdf",
+    "labelUrl": "/docs/label/brufen-600-tab.pdf"
   },
-  "11": {
-    "sdsUrl": "/docs/sds/glimepiride-2mg-tablets.pdf",
-    "labelUrl": "/docs/label/glimepiride-2mg-tablets.pdf"
+  "158c0475-24bb-467f-8fb2-49112307377d": {
+    "sdsUrl": "/docs/sds/ibugesic-400-tab-sr.pdf",
+    "labelUrl": "/docs/label/ibugesic-400-tab-sr.pdf"
   },
-  "12": {
-    "sdsUrl": "/docs/sds/atorvastatin-10mg-tablets.pdf",
-    "labelUrl": "/docs/label/atorvastatin-10mg-tablets.pdf"
+  "11924d5e-787d-496d-9a53-dec7ee998511": {
+    "sdsUrl": "/docs/sds/ibugesic-100-syr.pdf",
+    "labelUrl": "/docs/label/ibugesic-100-syr.pdf"
   },
-  "13": {
-    "sdsUrl": "/docs/sds/atorvastatin-20mg-tablets.pdf",
-    "labelUrl": "/docs/label/atorvastatin-20mg-tablets.pdf"
+  "dff0d757-dcc5-4b10-968d-6d4df2320b44": {
+    "sdsUrl": "/docs/sds/voveran-50-tab-er.pdf",
+    "labelUrl": "/docs/label/voveran-50-tab-er.pdf"
   },
-  "14": {
-    "sdsUrl": "/docs/sds/amlodipine-5mg-tablets.pdf",
-    "labelUrl": "/docs/label/amlodipine-5mg-tablets.pdf"
+  "d408787d-f937-4730-b569-7f7ff89cda44": {
+    "sdsUrl": "/docs/sds/voveran-75-tab.pdf",
+    "labelUrl": "/docs/label/voveran-75-tab.pdf"
   },
-  "15": {
-    "sdsUrl": "/docs/sds/omeprazole-20mg-capsules.pdf",
-    "labelUrl": "/docs/label/omeprazole-20mg-capsules.pdf"
+  "06d99305-d905-49ac-9f83-b0d283d27e92": {
+    "sdsUrl": "/docs/sds/voveran-1-oint-xr.pdf",
+    "labelUrl": "/docs/label/voveran-1-oint-xr.pdf"
   },
-  "16": {
-    "sdsUrl": "/docs/sds/pantoprazole-40mg-tablets.pdf",
-    "labelUrl": "/docs/label/pantoprazole-40mg-tablets.pdf"
+  "9c2282c7-5533-4cda-9c44-f7b8e3993d7e": {
+    "sdsUrl": "/docs/sds/diclomax-50-tab.pdf",
+    "labelUrl": "/docs/label/diclomax-50-tab.pdf"
   },
-  "17": {
-    "sdsUrl": "/docs/sds/ranitidine-150mg-tablets.pdf",
-    "labelUrl": "/docs/label/ranitidine-150mg-tablets.pdf"
+  "052cecb3-f24e-4a3e-a6b2-ee3b97e89533": {
+    "sdsUrl": "/docs/sds/diclomax-75-tab-sr.pdf",
+    "labelUrl": "/docs/label/diclomax-75-tab-sr.pdf"
   },
-  "18": {
-    "sdsUrl": "/docs/sds/levothyroxine-50mcg-tablets.pdf",
-    "labelUrl": "/docs/label/levothyroxine-50mcg-tablets.pdf"
+  "e8480ec9-6675-472d-b1aa-1adc7cf6010d": {
+    "sdsUrl": "/docs/sds/pantocid-40-tab.pdf",
+    "labelUrl": "/docs/label/pantocid-40-tab.pdf"
   },
-  "19": {
-    "sdsUrl": "/docs/sds/levothyroxine-100mcg-tablets.pdf",
-    "labelUrl": "/docs/label/levothyroxine-100mcg-tablets.pdf"
+  "2796a001-a3b0-4295-ac10-a0cdfbeb3d55": {
+    "sdsUrl": "/docs/sds/pantocid-20-tab.pdf",
+    "labelUrl": "/docs/label/pantocid-20-tab.pdf"
   },
-  "20": {
-    "sdsUrl": "/docs/sds/montelukast-10mg-tablets.pdf",
-    "labelUrl": "/docs/label/montelukast-10mg-tablets.pdf"
+  "d5a16dbc-ac06-4703-94ce-1656625a379a": {
+    "sdsUrl": "/docs/sds/pantop-40-tab.pdf",
+    "labelUrl": "/docs/label/pantop-40-tab.pdf"
   },
-  "21": {
-    "sdsUrl": "/docs/sds/salbutamol-inhaler-100mcg.pdf",
-    "labelUrl": "/docs/label/salbutamol-inhaler-100mcg.pdf"
+  "4e0041a1-28ea-44b5-a3a6-57da2d3c6d63": {
+    "sdsUrl": "/docs/sds/pantodac-40-tab.pdf",
+    "labelUrl": "/docs/label/pantodac-40-tab.pdf"
   },
-  "22": {
-    "sdsUrl": "/docs/sds/cetirizine-10mg-tablets.pdf",
-    "labelUrl": "/docs/label/cetirizine-10mg-tablets.pdf"
+  "7c55ffb1-835e-4566-a75e-725ec1d75615": {
+    "sdsUrl": "/docs/sds/omez-20-cap.pdf",
+    "labelUrl": "/docs/label/omez-20-cap.pdf"
   },
-  "23": {
-    "sdsUrl": "/docs/sds/loratadine-10mg-tablets.pdf",
-    "labelUrl": "/docs/label/loratadine-10mg-tablets.pdf"
+  "4d144e61-491f-4a58-9c2e-e96819d29059": {
+    "sdsUrl": "/docs/sds/omez-40-cap.pdf",
+    "labelUrl": "/docs/label/omez-40-cap.pdf"
   },
-  "24": {
-    "sdsUrl": "/docs/sds/diphenhydramine-25mg-tablets.pdf",
-    "labelUrl": "/docs/label/diphenhydramine-25mg-tablets.pdf"
+  "566a6065-7d1d-41eb-a90b-270b58743f0a": {
+    "sdsUrl": "/docs/sds/ocid-20-cap.pdf",
+    "labelUrl": "/docs/label/ocid-20-cap.pdf"
   },
-  "25": {
-    "sdsUrl": "/docs/sds/morphine-10mg-injection.pdf",
-    "labelUrl": "/docs/label/morphine-10mg-injection.pdf"
+  "ac158475-653e-42ee-8c41-6db62e24bae3": {
+    "sdsUrl": "/docs/sds/mox-250-cap-xr.pdf",
+    "labelUrl": "/docs/label/mox-250-cap-xr.pdf"
   },
-  "26": {
-    "sdsUrl": "/docs/sds/tramadol-50mg-capsules.pdf",
-    "labelUrl": "/docs/label/tramadol-50mg-capsules.pdf"
+  "052e4604-9786-4acd-a2a4-9fa287a99279": {
+    "sdsUrl": "/docs/sds/mox-500-cap.pdf",
+    "labelUrl": "/docs/label/mox-500-cap.pdf"
   },
-  "27": {
-    "sdsUrl": "/docs/sds/codeine-phosphate-15mg-tablets.pdf",
-    "labelUrl": "/docs/label/codeine-phosphate-15mg-tablets.pdf"
+  "075e6526-e817-42ae-9df4-b2743c95cedd": {
+    "sdsUrl": "/docs/sds/mox-125-syr.pdf",
+    "labelUrl": "/docs/label/mox-125-syr.pdf"
   },
-  "28": {
-    "sdsUrl": "/docs/sds/vaccine-hepatitis-b-20mcg.pdf",
-    "labelUrl": "/docs/label/vaccine-hepatitis-b-20mcg.pdf"
+  "fe7bae91-75cf-4633-b9ee-6eb7c2c1019b": {
+    "sdsUrl": "/docs/sds/amoxyclav-500-125-tab.pdf",
+    "labelUrl": "/docs/label/amoxyclav-500-125-tab.pdf"
   },
-  "29": {
-    "sdsUrl": "/docs/sds/vaccine-tetanus-0.5ml.pdf",
-    "labelUrl": "/docs/label/vaccine-tetanus-0.5ml.pdf"
+  "b3d18c5a-0a30-4e4b-ae25-50de118bc8ee": {
+    "sdsUrl": "/docs/sds/amoxyclav-250-125-syr.pdf",
+    "labelUrl": "/docs/label/amoxyclav-250-125-syr.pdf"
   },
-  "30": {
-    "sdsUrl": "/docs/sds/vaccine-flu-0.5ml.pdf",
-    "labelUrl": "/docs/label/vaccine-flu-0.5ml.pdf"
+  "8ef51b2e-abab-4da1-b9d1-c16bafc0c0c9": {
+    "sdsUrl": "/docs/sds/azithral-500-tab.pdf",
+    "labelUrl": "/docs/label/azithral-500-tab.pdf"
   }
 }
-
-
-

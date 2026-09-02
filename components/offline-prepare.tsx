@@ -26,27 +26,36 @@ export function OfflinePrepare({ onComplete }: OfflinePrepareProps) {
 
   const checkPreparedStatus = async () => {
     try {
-      // Check if service worker is active
-      if ("serviceWorker" in navigator) {
-        const registration = await navigator.serviceWorker.ready
-        if (registration) {
-          // Check if data files are cached
-          const cache = await caches.open("niti-pharma-data-v1")
-          const dataFiles = [
-            "/data/products.json",
-            "/data/product_embeddings.bin",
-            "/data/product_embeddings.meta.json",
-            "/data/inn_synonyms.json",
-          ]
+      if (!("serviceWorker" in navigator) || !("caches" in window)) {
+        return
+      }
+      // getRegistration resolves immediately; serviceWorker.ready would
+      // hang forever when no service worker is registered (e.g. in dev)
+      const registration = await navigator.serviceWorker.getRegistration()
+      if (!registration) {
+        return
+      }
 
-          const cached = await Promise.all(
-            dataFiles.map((url) => cache.match(url))
-          )
+      const hasCache = await caches.has("niti-pharma-data-v2")
+      if (!hasCache) {
+        return
+      }
 
-          if (cached.every((c) => c !== undefined)) {
-            setIsReady(true)
-          }
-        }
+      // Check if data files are cached
+      const cache = await caches.open("niti-pharma-data-v2")
+      const dataFiles = [
+        "/data/products.json",
+        "/data/product_embeddings.bin",
+        "/data/product_embeddings.meta.json",
+        "/data/inn_synonyms.json",
+      ]
+
+      const cached = await Promise.all(
+        dataFiles.map((url) => cache.match(url))
+      )
+
+      if (cached.every((c) => c !== undefined)) {
+        setIsReady(true)
       }
     } catch (error) {
       console.error("Error checking prepared status:", error)
@@ -95,18 +104,24 @@ export function OfflinePrepare({ onComplete }: OfflinePrepareProps) {
         })
       }
 
-      // Also cache directly
-      const cache = await caches.open("niti-pharma-data-v1")
+      // Also cache directly. A file that fails to cache means offline mode
+      // will not actually work, so surface it instead of warning silently.
+      const cache = await caches.open("niti-pharma-data-v2")
+      const failed: string[] = []
       await Promise.all(
         dataFiles.map(async (url, index) => {
           try {
             await cache.add(url)
             setProgress(20 + (index + 1) * (30 / dataFiles.length))
           } catch (error) {
-            console.warn(`Failed to cache ${url}:`, error)
+            console.error(`Failed to cache ${url}:`, error)
+            failed.push(url)
           }
         })
       )
+      if (failed.length > 0) {
+        throw new Error(`Failed to cache required files: ${failed.join(", ")}`)
+      }
 
       // Step 3: Preload embedding model
       setProgress(50)

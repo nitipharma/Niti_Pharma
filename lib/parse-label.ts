@@ -1,7 +1,7 @@
-import { parseStrength, type ParsedUnit, isSolidFormUnit, isLiquidFormUnit } from "./units"
+import { parseStrength } from "./units"
+import type { DosageForm, ReleaseType } from "@/types/product"
 
-export type DosageForm = "tablet" | "capsule" | "syrup" | "injection" | "ointment"
-export type ReleaseType = "IR" | "ER" | "SR" | "XR"
+export type { DosageForm, ReleaseType }
 
 export interface ParsedActive {
   inn: string
@@ -109,7 +109,7 @@ function detectDosageForm(text: string): DosageForm | undefined {
 function detectReleaseType(text: string): ReleaseType | undefined {
   const upper = text.toUpperCase()
   
-  if (/\bXR\b/.test(upper) || /\bEXTENDED\s+RELEASE\b/.test(upper)) {
+  if (/\bXR\b/.test(upper)) {
     return "XR"
   }
   if (/\bER\b/.test(upper) || /\bEXTENDED\s+RELEASE\b/.test(upper)) {
@@ -214,53 +214,61 @@ function extractActives(
   for (const line of lines) {
     const trimmedLine = line.trim()
     if (!trimmedLine || trimmedLine.length < 5) continue
-    
-    // Try pattern matching first
-    for (const pattern of innPatterns) {
-      const match = trimmedLine.match(pattern)
-      if (match) {
-        const innName = match[1].trim()
-        const strengthText = match[2].trim()
-        
-        // Skip if it looks like a brand name or non-INN word
-        if (/tablet|capsule|syrup|injection|brand|trade|name|composition/i.test(innName)) {
-          continue
-        }
-        
-        const parsedStrength = parseStrength(strengthText)
-        if (parsedStrength && parsedStrength.confidence > 0.3) {
-          const normalizedINN = normalizeINN(innName, synonyms)
-          actives.push({
-            inn: normalizedINN,
-            mg: parsedStrength.normalizedMg,
-            confidence: parsedStrength.confidence * 0.9, // Slight penalty for pattern matching
-          })
-          break // Found a match, move to next line
+
+    // Combination products list several actives on one line joined by "+"
+    // (e.g. "Paracetamol 500mg + Caffeine 65mg"), so process each segment
+    const segments = trimmedLine.split(/\s*\+\s*/)
+
+    for (const segment of segments) {
+      if (!segment || segment.length < 5) continue
+
+      // Try pattern matching first
+      for (const pattern of innPatterns) {
+        const match = segment.match(pattern)
+        if (match) {
+          const innName = match[1].trim()
+          const strengthText = match[2].trim()
+
+          // Skip if it looks like a brand name or non-INN word
+          if (/tablet|capsule|syrup|injection|brand|trade|name|composition/i.test(innName)) {
+            continue
+          }
+
+          const parsedStrength = parseStrength(strengthText)
+          if (parsedStrength && parsedStrength.confidence > 0.3) {
+            const normalizedINN = normalizeINN(innName, synonyms)
+            actives.push({
+              inn: normalizedINN,
+              mg: parsedStrength.normalizedMg,
+              confidence: parsedStrength.confidence * 0.9, // Slight penalty for pattern matching
+            })
+            break // Found a match, move to next segment
+          }
         }
       }
-    }
-    
-    // Try known INN matching (more reliable)
-    for (const inn of uniqueINNs) {
-      // Use word boundary to avoid partial matches
-      const innRegex = new RegExp(`\\b${inn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, "i")
-      if (innRegex.test(trimmedLine)) {
-        // Look for strength near the INN (within 50 chars)
-        const innIndex = trimmedLine.toLowerCase().indexOf(inn.toLowerCase())
-        const searchStart = Math.max(0, innIndex - 20)
-        const searchEnd = Math.min(trimmedLine.length, innIndex + inn.length + 50)
-        const searchText = trimmedLine.substring(searchStart, searchEnd)
-        
-        const strengthMatch = searchText.match(/(\d+\.?\d*\s*(?:mg|mcg|g|IU|%|mg\/5ml|mg per 5ml|mg\/5\s*ml))/i)
-        if (strengthMatch) {
-          const parsedStrength = parseStrength(strengthMatch[1])
-          if (parsedStrength && parsedStrength.confidence > 0.3) {
-            actives.push({
-              inn: normalizeINN(inn, synonyms),
-              mg: parsedStrength.normalizedMg,
-              confidence: parsedStrength.confidence * 0.95, // Higher confidence for known INN
-            })
-            break // Found a match, move to next line
+
+      // Try known INN matching (more reliable). Do not stop at the first
+      // hit — a segment or line can still mention several known INNs.
+      for (const inn of uniqueINNs) {
+        // Use word boundary to avoid partial matches
+        const innRegex = new RegExp(`\\b${inn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, "i")
+        if (innRegex.test(segment)) {
+          // Look for strength near the INN (within 50 chars)
+          const innIndex = segment.toLowerCase().indexOf(inn.toLowerCase())
+          const searchStart = Math.max(0, innIndex - 20)
+          const searchEnd = Math.min(segment.length, innIndex + inn.length + 50)
+          const searchText = segment.substring(searchStart, searchEnd)
+
+          const strengthMatch = searchText.match(/(\d+\.?\d*\s*(?:mg|mcg|µg|μg|g|IU|%|mg\/5ml|mg per 5ml|mg\/5\s*ml))/i)
+          if (strengthMatch) {
+            const parsedStrength = parseStrength(strengthMatch[1])
+            if (parsedStrength && parsedStrength.confidence > 0.3) {
+              actives.push({
+                inn: normalizeINN(inn, synonyms),
+                mg: parsedStrength.normalizedMg,
+                confidence: parsedStrength.confidence * 0.95, // Higher confidence for known INN
+              })
+            }
           }
         }
       }
@@ -317,21 +325,7 @@ function calculateConfidence(
   if (actives.length === 0) {
     confidence *= 0.5
   }
-  
-  // Penalize conflicting units (e.g., mg and mg/5ml together)
-  const hasSolidUnits = actives.some((a) => {
-    // Check if mg value suggests solid form
-    return a.mg > 0 && a.mg < 10000
-  })
-  const hasLiquidUnits = actives.some((a) => {
-    // Check if mg value suggests liquid form (per 5ml)
-    return a.mg > 0 && a.mg < 1000
-  })
-  
-  if (hasSolidUnits && hasLiquidUnits && actives.length > 1) {
-    confidence *= 0.8 // Slight penalty for mixed units
-  }
-  
+
   return Math.min(1.0, Math.max(0.0, confidence))
 }
 

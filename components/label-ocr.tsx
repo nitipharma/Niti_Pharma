@@ -29,15 +29,16 @@ interface LabelOCRProps {
 
 // Tesseract.js automatically uses IndexedDB for caching traineddata
 // We just need to configure it properly
-async function createCachedWorker(): Promise<Worker> {
+async function createCachedWorker(
+  onProgress?: (progress: number) => void
+): Promise<Worker> {
   // Tesseract.js v4+ automatically caches traineddata in IndexedDB
   // The cache key is managed internally by tesseract.js
   try {
     const worker = await createWorker("eng", 1, {
       logger: (m) => {
-        // Suppress verbose logging, but keep progress updates
-        if (m.status === "recognizing text") {
-          // Progress is handled in the recognize call
+        if (m.status === "recognizing text" && typeof m.progress === "number") {
+          onProgress?.(m.progress)
         }
       },
       // Use CDN for language models (jsDelivr is the default)
@@ -117,9 +118,16 @@ function preprocessImage(
 function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image()
-    img.onload = () => resolve(img)
-    img.onerror = reject
-    img.src = URL.createObjectURL(file)
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve(img)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error("Failed to load image"))
+    }
+    img.src = url
   })
 }
 
@@ -130,18 +138,33 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
   const [preview, setPreview] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [dragActive, setDragActive] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const workerRef = useRef<Worker | null>(null)
+  const previewUrlRef = useRef<string | null>(null)
+  const processingRef = useRef(false)
+
+  const replacePreviewUrl = useCallback((url: string | null) => {
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current)
+    }
+    previewUrlRef.current = url
+    setPreview(url)
+  }, [])
 
   const handleFile = useCallback(async (file: File) => {
+    // Guard against a second drop racing the re-render that disables the UI
+    if (processingRef.current) return
+
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file (JPEG, PNG, etc.)")
+      setErrorMessage("Please select an image file (JPEG, PNG, etc.)")
       return
     }
 
+    processingRef.current = true
+    setErrorMessage(null)
     setSelectedFile(file)
-    const previewUrl = URL.createObjectURL(file)
-    setPreview(previewUrl)
+    replacePreviewUrl(URL.createObjectURL(file))
 
     setIsProcessing(true)
     setProgress(0)
@@ -185,13 +208,9 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
               },
               barcodeProductId: product.id,
             }
-            
-            URL.revokeObjectURL(previewUrl)
-            
-            setTimeout(() => {
-              onResult(result)
-              setIsProcessing(false)
-            }, 500)
+
+            onResult(result)
+            setIsProcessing(false)
             return
           }
         }
@@ -203,10 +222,12 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
       setStatus("Initializing OCR engine...")
       setProgress(30)
 
-      // Create worker with caching
+      // Create worker with caching; map recognition progress to the 40-95 range
       if (!workerRef.current) {
         try {
-          workerRef.current = await createCachedWorker()
+          workerRef.current = await createCachedWorker((p) => {
+            setProgress(40 + Math.round(p * 55))
+          })
         } catch (error) {
           // If worker creation fails, provide helpful error message
           const errorMessage = error instanceof Error ? error.message : "Unknown error"
@@ -230,12 +251,8 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
       // Perform OCR with timing
       const ocrTimer = new PerformanceTimer("OCR")
       
-      // Perform OCR (progress tracking removed for compatibility)
       const result = await worker.recognize(canvas)
       const ocrMs = ocrTimer.end()
-      
-      // Update progress after OCR completes
-      setProgress(95)
 
       setProgress(100)
       setStatus("Parsing label data...")
@@ -270,14 +287,8 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
         parsed,
       }
 
-      // Cleanup preview URL
-      URL.revokeObjectURL(previewUrl)
-
-      // Callback with result
-      setTimeout(() => {
-        onResult(ocrResult)
-        setIsProcessing(false)
-      }, 500)
+      onResult(ocrResult)
+      setIsProcessing(false)
     } catch (error) {
       console.error("OCR error:", error)
       recordMetric({
@@ -295,11 +306,13 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
           "After the first download, the model will be cached for offline use."
       }
       
-      alert(`OCR failed: ${errorMessage}`)
+      setErrorMessage(`OCR failed: ${errorMessage}`)
       setIsProcessing(false)
-      setStatus("Error occurred")
+      setStatus("")
+    } finally {
+      processingRef.current = false
     }
-  }, [onResult])
+  }, [onResult, replacePreviewUrl])
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -335,21 +348,26 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
 
   const handleReset = useCallback(() => {
     setSelectedFile(null)
-    setPreview(null)
+    replacePreviewUrl(null)
     setIsProcessing(false)
     setProgress(0)
     setStatus("")
+    setErrorMessage(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
-  }, [])
+  }, [replacePreviewUrl])
 
-  // Cleanup worker on unmount
+  // Cleanup worker and preview URL on unmount
   useEffect(() => {
     return () => {
       if (workerRef.current) {
         workerRef.current.terminate().catch(console.error)
         workerRef.current = null
+      }
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current)
+        previewUrlRef.current = null
       }
     }
   }, [])
@@ -435,6 +453,12 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
           </div>
         )}
 
+        {errorMessage && (
+          <p role="alert" className="text-sm text-destructive mt-4">
+            {errorMessage}
+          </p>
+        )}
+
         {isProcessing && (
           <div className="space-y-4">
             {preview && (
@@ -457,7 +481,14 @@ export function LabelOCR({ onResult, onClose }: LabelOCRProps) {
                 <span className="text-muted-foreground">{status}</span>
                 <span className="font-medium">{progress}%</span>
               </div>
-              <div className="w-full bg-muted rounded-full h-2">
+              <div
+                className="w-full bg-muted rounded-full h-2"
+                role="progressbar"
+                aria-valuenow={progress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="OCR progress"
+              >
                 <div
                   className="bg-primary h-2 rounded-full transition-all duration-300"
                   style={{ width: `${progress}%` }}

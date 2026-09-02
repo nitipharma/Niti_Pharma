@@ -15,126 +15,48 @@ export type Filters = {
 export function filterProducts(products: Product[], filters: Filters): Product[] {
   let filtered = [...products]
 
-  // Search filter - improved word-based matching
+  // Search filter - word-based matching
   if (filters.search) {
     const searchLower = filters.search.toLowerCase().trim()
-    
-    // Extract meaningful words (alphanumeric sequences, minimum 2 chars)
-    // Split by spaces and also handle cases where words are concatenated
-    const searchWords = searchLower
-      .split(/[\s.,;:!?]+/)
-      .flatMap(word => {
-        // Split concatenated words (e.g., "ParacetamolTablets" -> ["paracetamol", "tablets"])
-        // This handles camelCase and similar patterns
-        const cleaned = word.replace(/[^a-z0-9]/g, '')
-        if (cleaned.length < 2) return []
-        
-        const words: string[] = []
-        
-        // Try to split on capital letters or numbers (for camelCase)
-        const parts = cleaned.split(/(?=[A-Z])|(?=\d)/).filter(p => p.length >= 2)
-        if (parts.length > 0) {
-          words.push(...parts)
-        } else {
-          words.push(cleaned)
-        }
-        
-        // Also extract common pharmaceutical words from concatenated strings
-        // Check if the word contains common drug name patterns (3+ chars)
-        const commonPatterns = ['calpol', 'paracetamol', 'tablet', 'mg', 'ml', 'syrup', 'capsule']
-        for (const pattern of commonPatterns) {
-          if (cleaned.includes(pattern) && pattern.length >= 3) {
-            words.push(pattern)
-          }
-        }
-        
-        // Extract numbers separately (e.g., "500" from "mg500" or "500mg")
-        const numbers = cleaned.match(/\d+/g)
-        if (numbers) {
-          words.push(...numbers.filter(n => n.length >= 2))
-        }
-        
-        return words
-      })
-      .filter(word => word.length >= 2)
-      // Remove duplicates
-      .filter((word, index, self) => self.indexOf(word) === index)
-    
-    // If no valid words, use original search
-    if (searchWords.length === 0) {
-      searchWords.push(searchLower.replace(/[^a-z0-9]/g, ''))
-    }
-    
-    filtered = filtered.filter((p) => {
-      const brandLower = p.brand_name.toLowerCase()
-      const manufacturerLower = getManufacturer(p).toLowerCase()
-      const ndcLower = p.ndc?.toLowerCase() || ""
-      const therapeuticClassLower = p.therapeutic_class.toLowerCase()
-      
-      // Check if the full search string matches (for exact matches)
-      const fullMatch = 
-        brandLower.includes(searchLower) ||
-        manufacturerLower.includes(searchLower) ||
-        ndcLower.includes(searchLower) ||
-        p.actives.some(a => a.inn.toLowerCase().includes(searchLower))
-      
-      if (fullMatch) return true
-      
-      // Helper function to check if word matches (handles concatenated words)
-      const wordMatches = (text: string, word: string): boolean => {
-        if (!text || !word) return false
 
-        // Direct match
-        if (text.includes(word)) return true
-
-        // Check if word is part of a concatenated string (e.g., "mgcalpol" contains "calpol")
-        // Split text into potential words and check
-        const textWords = text.split(/[\s\-_]+/)
-        for (const tw of textWords) {
-          // Empty fragments match everything via includes("") — skip them,
-          // and require meaningful length on both sides
-          if (tw.length < 2) continue
-          // Check if search word is contained in text word or vice versa
-          if (tw.includes(word) || word.includes(tw)) {
-            // Make sure the match is meaningful (at least 3 chars or exact match)
-            if (word.length >= 3 || tw === word) {
-              return true
-            }
-          }
-        }
-        return false
-      }
-      
-      // Check if any significant word matches in brand name (highest priority)
-      // Prioritize longer words (brand names) over short words (numbers)
-      const brandMatches = searchWords
-        .filter(word => word.length >= 3) // Focus on brand names, not just numbers
-        .filter(word => wordMatches(brandLower, word))
-      
-      // Check if number matches (e.g., "500" in "500mg")
-      const numberMatches = searchWords
-        .filter(word => /^\d+$/.test(word)) // Only numbers
-        .filter(word => brandLower.includes(word))
-      
-      // Match if we have brand name matches (highest priority)
-      if (brandMatches.length > 0) return true
-      
-      // Also match if we have number matches in brand name
-      // This handles cases like "Calpol 500mg" matching "500"
-      if (numberMatches.length > 0) return true
-      
-      // Check if words match across different fields
-      const matches = searchWords.filter(word => 
-        wordMatches(brandLower, word) ||
-        wordMatches(manufacturerLower, word) ||
-        wordMatches(ndcLower, word) ||
-        p.actives.some(a => wordMatches(a.inn.toLowerCase(), word)) ||
-        wordMatches(therapeuticClassLower, word)
+    // Tokenize into words and standalone numbers ("calpol 500mg" ->
+    // ["calpol", "500mg", "500"])
+    const searchWords = Array.from(
+      new Set(
+        searchLower
+          .split(/[^a-z0-9.]+/)
+          .flatMap((word) => {
+            const words = word.length >= 2 ? [word] : []
+            const numbers = word.match(/\d+/g) || []
+            return words.concat(numbers.filter((n) => n.length >= 2 && n !== word))
+          })
       )
-      
-      // Match if at least one word matches (flexible matching)
-      return matches.length > 0
-    })
+    )
+
+    if (searchWords.length > 0) {
+      // Short queries are typed by hand: require every word to match.
+      // Long queries come from OCR text dumps where much of the text is
+      // noise, so require at least two matching words instead.
+      const requiredMatches = searchWords.length <= 3 ? searchWords.length : 2
+
+      filtered = filtered.filter((p) => {
+        const haystack = [
+          p.brand_name,
+          getManufacturer(p),
+          p.ndc || "",
+          p.therapeutic_class,
+          ...p.actives.map((a) => `${a.inn} ${a.mg}mg ${a.mg}`),
+        ]
+          .join(" ")
+          .toLowerCase()
+
+        // Full search string match always wins
+        if (haystack.includes(searchLower)) return true
+
+        const matches = searchWords.filter((word) => haystack.includes(word))
+        return matches.length >= requiredMatches
+      })
+    }
   }
 
   // Manufacturer filter
