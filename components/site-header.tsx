@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils"
 import { ThemeToggle } from "./theme-toggle"
 import { Button } from "./ui/button"
 import { Menu, X, ChevronDown } from "lucide-react"
-import { PWAInstaller } from "./pwa-installer"
 import { OfflinePrepare } from "./offline-prepare"
 import { Logo } from "./logo"
 import { PLATFORM_LINKS } from "@/lib/platform-nav"
@@ -127,7 +126,6 @@ export function SiteHeader() {
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <div className="hidden items-center gap-2 sm:flex">
             <OfflinePrepare />
-            <PWAInstaller />
           </div>
           <ThemeToggle />
           <Button asChild size="sm" className="hidden lg:inline-flex">
@@ -222,7 +220,6 @@ export function SiteHeader() {
 
             <div className="mt-4 space-y-2 border-t pt-4 sm:hidden">
               <OfflinePrepare />
-              <PWAInstaller />
             </div>
           </nav>
         </div>
