@@ -20,7 +20,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Grid3x3, Table as TableIcon, Filter, X, Camera } from "lucide-react"
+import Link from "next/link"
+import { Grid3x3, Table as TableIcon, Filter, X, Camera, AlertTriangle } from "lucide-react"
 import { getAllProducts, getUniqueManufacturers, getUniqueCategories, getProductsByIds } from "@/lib/data"
 import { filterProducts, type Filters } from "@/lib/filters"
 import { prepareSemanticSearch, semanticSearch, type EmbeddingBackend } from "@/lib/semantic-search"
@@ -374,6 +375,20 @@ export default function CatalogPage() {
         </div>
         }
       />
+
+      <div
+        role="note"
+        className="mb-4 flex items-start gap-2 rounded-lg border border-amber-300/70 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-200 sm:mb-5"
+      >
+        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+        <p>
+          Catalog information may not be complete or up to date.{" "}
+          <Link href="/contact" className="font-medium underline underline-offset-2 hover:opacity-80">
+            Contact us
+          </Link>{" "}
+          for the latest availability and pricing.
+        </p>
+      </div>
 
       <div className="mb-4 sm:mb-6">
         <SearchBar

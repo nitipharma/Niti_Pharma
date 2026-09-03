@@ -14,12 +14,12 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default: "Niti Pharma — B2B Pharmaceutical Distribution",
-    template: "%s · Niti Pharma",
+    default: "Niti Pharma | B2B Pharmaceutical Distribution",
+    template: "%s | Niti Pharma",
   },
   description: "Licensed B2B pharmaceutical distributor serving pharmacies across India — 30,000+ SKUs, cold-chain logistics, batch-level traceability, and dependable delivery.",
   openGraph: {
-    title: "Niti Pharma — B2B Pharmaceutical Distribution",
+    title: "Niti Pharma | B2B Pharmaceutical Distribution",
     description: "Licensed B2B pharmaceutical distributor serving pharmacies across India.",
     type: "website",
   },
